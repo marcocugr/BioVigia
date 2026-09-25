@@ -1,37 +1,24 @@
 # Milestones
 Definen que quiero entregar, no como entregarlo.
 
-## Milestone 0: 
+## Milestone 0: Catálogo del ecosistema fluvial base
 
-### Que se entrega
-Persistencia de datos con rios y fauna fluvial de Toledo.
+### Qué se entrega
+Un producto mínimamente viable (MVP) que permite a un usuario descubrir los diferentes ríos que existen en la región (ej. Toledo) y consultar qué especies habitan de forma general en cada uno de ellos.
 
-### Cual es el objetivo del milestone
-Tener en un sistema de persistencia de datos en ficheros bajo una misma carpeta donde se almacenen 30 especies fluviales que existen en Toledo y otro donde se almacenen 15 los ríos de Toledo.
-Las especies deben contar con:
-- Nombre cientifico
-- Nombre conocido en España. 
-
-Los ríos deben contar con:
-- Nombre.
-- Provincia.
-- Ciudad.
-- Pueblo.
+### Cuál es el objetivo del milestone
+Resolver el desconocimiento geográfico y biológico del usuario sobre una zona que no domina. El cliente (el pescador) obtiene valor inmediato al poder explorar qué ríos tiene disponibles y qué capturas potenciales ofrece cada río, permitiéndole elegir su destino con criterio antes de salir de casa.
 
 ### Historias de usuario asignadas
 - [HU001]
 
+## Milestone 1: Alertas de viabilidad por especies invasoras
 
-## Milestone 1
+### Qué se entrega
+Una funcionalidad que evalúa la viabilidad de la pesca o caza en una zona, generando alertas para el usuario si existen registros de especies invasoras que depreden a su objetivo principal.
 
-### Que se entrega
-Un sistema de búsqueda en la cual se introduzca un nombre de un río de toledo y una especie a pescar, generandose alertas si hay especies invasoras que le depreden en esa zona. 
-
-### Cual es el objetivo del milestone
-Poder introducir/asociar especies invasoras en un rio de Toledo determinado.
-Los sistema de persistencia de datos deben actualizarse de la siguiente forma:
-- El relativo a ríos debe contar con un campo mas que represente qué especies habitan en él.
-- El relativo a especies debe contar con dos datos adicionales, uno que represente si es presa de unas especies invasoras o no, y otro que incluya a quien caza o por quien es cazado.
+### Cuál es el objetivo del milestone
+Aportar el valor diferencial del producto: evitar que el pescador o cazador pierda el día. En lugar de definir cómo el usuario interactúa (buscadores, filtros), el compromiso es entregar una evaluación clara ("voy o no voy") basada en las relaciones de depredación de la zona.
 
 ### Historias de usuario asignadas
 - [HU002]

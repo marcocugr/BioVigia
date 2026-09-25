@@ -15,8 +15,8 @@ Desde la orilla, saca su móvil y abre BioVigia. Realiza una fotografía de la c
 En pocos segundos, el registro queda publicado en la plataforma y puede ser consultado por otros pescadores y usuarios.
 Carlos ha contribuido con información útil para la comunidad y, una vez enviado el aviso, cierra la aplicación y continúa con su jornada de pesca.
 
-## Jornada 3: Tabitha quiere llevar acabo un estudio de la fauna fluvial
+## Jornada 3: Tabitha quiere llevar a cabo un estudio de la fauna fluvial
 Tabitha es gestora ambiental y necesita hacer un análisis.
 Tabitha decide abrir BioVigia para conseguir información.
-Tabitha seleciona que ríos la interesan y la app le devuelve un resumen que va a contener datos sobre cómo se ha expandido una especie invasora en una zona a lo largo del tiempo, primer y último avistamiento, si ya no tiene presencia en un río y la está en otra zona, etc... para priorizar dónde actuar. 
-Tabitha tiene el resumenque la interesa para su estudio, se da por satisfecha y cierra la app.
+Tabitha selecciona que ríos la interesan y la app le devuelve un resumen que va a contener datos sobre cómo se ha expandido una especie invasora en una zona a lo largo del tiempo, primer y último avistamiento, si ya no tiene presencia en un río y si está en otra zona, etc... para priorizar dónde actuar. 
+Tabitha tiene el resumen que la interesa para su estudio, se da por satisfecha y cierra la app.

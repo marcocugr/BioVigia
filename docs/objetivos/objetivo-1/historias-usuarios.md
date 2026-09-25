@@ -1,14 +1,14 @@
 # Historias de Usuario
 Van con el tag 'user-stories' y pertenecen a un milestone cada una.
 
-## [HU001] Conocer rios y especies fluviales
-Como pescador quiero ver el catálogo de ríos y especies fluviales disponibles en Toledo, para ver si me merece la pena desplazarme.
+## [HU001] Desconocimiento de los ríos y su fauna local
+Como pescador, desconozco qué ríos hay en la provincia de Toledo y qué especies habitan por lo general en cada uno de ellos, lo que me impide planificar mi jornada y me hace perder el día yendo a ciegas a lugares donde no hay lo que busco.
 
-## [HU002] Consultar avisos de una zona
-Como pescador o cazador, quiero consultar si en un río donde tengo pensado ir a cazar o pescar una determinada especie me salga si hay presencia de especies invasoras que depreden la que yo voy a pescar, para no perder el día e irme a otra zona donde no haya presencia de especies invasoras que me impidan la obtención de la que yo quiero cazar.
+## [HU002] No sé si la especie que quiero pescar está siendo depredada en esa zona
+Como pescador o cazador, no tengo forma de saber si en el río donde pienso pescar o cazar una especie concreta hay especies invasoras que la depreden, y por eso pierdo jornadas enteras sin capturas.
 
-## [HU003] Reportar un aviso con foto y ubicación
-Como pescador o cazador, quiero reportar un aviso de especie invasora con foto y ubicación automática, para que otros sepan que esa zona está afectada.
+## [HU003] No puedo avisar a otros cuando veo una especie invasora
+Como pescador o cazador, cuando veo una especie invasora no tengo forma de avisar a los demás para que no pierdan el día, y la información se queda en mí.
 
-## [HU004] Ver la evolución de una especie en el tiempo
-Como gestor ambiental, quiero ver cómo se ha expandido una especie invasora en una zona a lo largo del tiempo, para priorizar dónde actuar. 
+## [HU004] No sé cómo se está expandiendo una especie invasora en el tiempo
+Como gestora ambiental, no tengo forma de saber cómo se está expandiendo una especie invasora a lo largo del tiempo, y por eso no puedo priorizar dónde actuar.
