@@ -1,14 +1,17 @@
 # Historias de Usuario
-Van con el tag 'user-stories' y pertenecen a un milestone cada una.
+Van con el tag 'user-stories' y cada una se irá resolviendo mediante issues en distintos milestones, según el nivel de abstracción de cada fase.
 
-## [HU001] Desconocimiento de los ríos y su fauna local
-Como pescador, desconozco qué ríos hay en la provincia de Toledo y qué especies habitan por lo general en cada uno de ellos, lo que me impide planificar mi jornada y me hace perder el día yendo a ciegas a lugares donde no hay lo que busco.
+## [HU001] No sé si mi especie objetivo está siendo depredada en el río al que voy a ir
+Como pescador que va a pasar una jornada completa en un río (8-12 horas en el mismo sitio) que ya conozco de Toledo, no tengo forma de saber antes de salir de casa si hay especies invasoras que depreden a la especie que busco, por lo que a veces pierdo el día entero yendo a una zona con pocas o nulas posibilidades de captura.
 
-## [HU002] No sé si la especie que quiero pescar está siendo depredada en esa zona
-Como pescador o cazador, no tengo forma de saber si en el río donde pienso pescar o cazar una especie concreta hay especies invasoras que la depreden, y por eso pierdo jornadas enteras sin capturas.
+**Jornada relacionada:** Jornada 1 (Antonio).
 
-## [HU003] No puedo avisar a otros cuando veo una especie invasora
-Como pescador o cazador, cuando veo una especie invasora no tengo forma de avisar a los demás para que no pierdan el día, y la información se queda en mí.
+## [HU002] No puedo avisar a otros pescadores cuando veo una especie invasora
+Como pescador, cuando encuentro una especie invasora en el río donde estoy pescando, no tengo forma de dejar constancia de ese avistamiento para que otros pescadores lo tengan en cuenta antes de ir a esa zona.
 
-## [HU004] No sé cómo se está expandiendo una especie invasora en el tiempo
-Como gestora ambiental, no tengo forma de saber cómo se está expandiendo una especie invasora a lo largo del tiempo, y por eso no puedo priorizar dónde actuar.
+**Jornada relacionada:** Jornada 2 (Carlos).
+
+## [HU003] No sé cómo se está expandiendo una especie invasora a lo largo del tiempo
+Como gestora ambiental, no tengo forma de ver cómo evoluciona la presencia de una especie invasora en una zona a lo largo del tiempo (primer y último avistamiento, si ha desaparecido de un río o ha aparecido en uno nuevo), por lo que no puedo priorizar dónde actuar con los recursos que tengo.
+
+**Jornada relacionada:** Jornada 3 (Tabitha).

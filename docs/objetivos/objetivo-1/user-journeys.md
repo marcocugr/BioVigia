@@ -2,7 +2,7 @@
 Las siguientes jornadas describen el uso completo de BioVigia una vez desarrollado. Algunas funcionalidades (como los avisos con fecha en Jornada 1, o el análisis de evolución temporal en Jornada 3) corresponden a historias de usuario que se implementarán en milestones futuros.
 
 ## Jornada 1: Antonio consulta antes de ir a pescar
-Antonio, pescador recreativo, utiliza BioVigia cada vez que planea una salida de pesca. Hoy se levanta a las 06:30 porque quiere ir a pescar cangrejos con su nieto en un río cercano.
+Antonio, pescador recreativo, utiliza BioVigia cada vez que planea una salida de pesca. Hoy se levanta a las 06:30 porque quiere ir a pescar cangrejos con su nieto en un río cercano de Toledo.
 Antes de coger el coche, abre BioVigia desde su móvil. En la pantalla principal escribe "cangrejo" en el buscador y consulta en el mapa la zona donde tenía previsto pescar.
 La aplicación le muestra que en esa zona se han registrado tres avisos de visón americano durante los últimos 15 días. Antonio sabe que la presencia de este depredador reduce significativamente las posibilidades de encontrar cangrejos, por lo que decide cambiar de ubicación.
 Tras revisar otras zonas cercanas, encuentra una en la que no existen avisos recientes y decide dirigirse allí.
