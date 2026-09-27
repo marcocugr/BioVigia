@@ -6,12 +6,7 @@ Como pescador que va a pasar una jornada completa en un río (8-12 horas en el m
 
 **Jornada relacionada:** Jornada 1 (Antonio).
 
-## [HU002] No puedo avisar a otros pescadores cuando veo una especie invasora
-Como pescador, cuando encuentro una especie invasora en el río donde estoy pescando, no tengo forma de dejar constancia de ese avistamiento para que otros pescadores lo tengan en cuenta antes de ir a esa zona.
-
-**Jornada relacionada:** Jornada 2 (Carlos).
-
-## [HU003] No sé cómo se está expandiendo una especie invasora a lo largo del tiempo
+## [HU002] No sé cómo se está expandiendo una especie invasora a lo largo del tiempo
 Como gestora ambiental, no tengo forma de ver cómo evoluciona la presencia de una especie invasora en una zona a lo largo del tiempo (primer y último avistamiento, si ha desaparecido de un río o ha aparecido en uno nuevo), por lo que no puedo priorizar dónde actuar con los recursos que tengo.
 
-**Jornada relacionada:** Jornada 3 (Tabitha).
+**Jornada relacionada:** Jornada 2 (Tabitha).

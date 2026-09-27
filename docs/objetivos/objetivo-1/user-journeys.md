@@ -8,14 +8,7 @@ La aplicación le muestra que en esa zona se han registrado tres avisos de visó
 Tras revisar otras zonas cercanas, encuentra una en la que no existen avisos recientes y decide dirigirse allí.
 Gracias a BioVigia, Antonio evita perder tiempo y combustible desplazándose a una ubicación con pocas probabilidades de éxito. Una vez tomada la decisión, cierra la aplicación y comienza su jornada de pesca.
 
-## Jornada 2: Carlos reporta un aviso desde el río
-Carlos está pescando en un río de Valencia, cuando de repente saca un siluro de aproximadamente 35 kg.
-Al identificar una especie invasora de gran tamaño, considera importante informar a la comunidad para que otros usuarios conozcan la situación de la zona.
-Desde la orilla, saca su móvil y abre BioVigia. Realiza una fotografía de la captura, la aplicación obtiene automáticamente su ubicación mediante GPS, selecciona la especie "siluro" en el catálogo y envía el aviso.
-En pocos segundos, el registro queda publicado en la plataforma y puede ser consultado por otros pescadores y usuarios.
-Carlos ha contribuido con información útil para la comunidad y, una vez enviado el aviso, cierra la aplicación y continúa con su jornada de pesca.
-
-## Jornada 3: Tabitha quiere llevar a cabo un estudio de la fauna fluvial
+## Jornada 2: Tabitha quiere llevar a cabo un estudio de la fauna fluvial
 Tabitha es gestora ambiental y necesita hacer un análisis.
 Tabitha decide abrir BioVigia para conseguir información.
 Tabitha selecciona que ríos la interesan y la app le devuelve un resumen que va a contener datos sobre cómo se ha expandido una especie invasora en una zona a lo largo del tiempo, primer y último avistamiento, si ya no tiene presencia en un río y si está en otra zona, etc... para priorizar dónde actuar. 
