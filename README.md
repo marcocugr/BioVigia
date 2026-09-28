@@ -39,4 +39,11 @@ Porque yo reporto el visón desde mi río, y un pescador de Madrid que quiere ve
 - https://www.gbif.org/es/
 
 ### Documentación adicional y configuración
-La documentacion relativa al objetivo 0 se encuentra [aquí](doc/objetivos/objetivo-0.md)
+La documentacion relativa al objetivo 0 se encuentra [aquí](docs/objetivos/objetivo-0/objetivo-0.md)
+
+### Planificación
+La planificación relativa al objetivo 1 se encuentra respectivamente en los siguientes puntos:
+- [Jornadas de usuario](docs/objetivos/objetivo-1/user-journeys.md)
+- [Personas](docs/objetivos/objetivo-1/personas.md)
+- [Historias de usuario](docs/objetivos/objetivo-1/historias-usuarios.md)
+- [Milestones](docs/objetivos/objetivo-1/milestones.md)
