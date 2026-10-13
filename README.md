@@ -47,3 +47,28 @@ La planificación relativa al objetivo 1 se encuentra respectivamente en los sig
 - [Personas](docs/objetivos/objetivo-1/personas.md)
 - [Historias de usuario](docs/objetivos/objetivo-1/historias-usuarios.md)
 - [Milestones](docs/objetivos/objetivo-1/milestones.md)
+
+### Lenguaje
+El modelo del dominio se implementa en **Rust**. Motivos:
+
+- **Tipado estático fuerte**, comprobado en compilación.
+- **No existe `null`**: lo opcional se expresa con `Option`, así que invariantes como «depredación sin depredador» o «avistamiento sin fuente» no compilan, en lugar de comprobarse en tiempo de ejecución.
+- **Errores del dominio con `Result`**: los constructores devuelven `Result<Self, ErrorDominio>`, separando por diseño los errores del dominio de los de programación (`panic!`).
+- **`enum` con datos** para los valores cerrados del dominio (`Fuente`, `FaseVital`) y *newtypes* (`Latitud`, `Longitud`) para que intercambiar valores del mismo tipo base no compile.
+- **Herramientas oficiales integradas**: rustup para gestionar las versiones.
+
+En el Milestone 0 se usa solo la biblioteca estándar, hasta que haya gestor de dependencias: la fecha de los avistamientos se representa con `std::time::SystemTime` y las URLs de las fotos se validan de forma mínima.
+
+### Entorno de desarrollo
+La versión de Rust del proyecto está fijada en el fichero [`rust-toolchain.toml`](rust-toolchain.toml), que es la única fuente de verdad para la versión.
+
+Único paso manual: instalar [rustup](https://rustup.rs/), que trabaja en espacio de usuario (`~/.rustup` y `~/.cargo`) sin modificar el sistema (en Windows, desde WSL):
+
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+
+Después, desde la raíz del repositorio:
+
+    rustup toolchain install   # instala la versión fijada en rust-toolchain.toml
+    rustc --version            # comprueba que es la fijada en rust-toolchain.toml
+
+Para cambiar de versión de Rust se modifica la línea `channel` de `rust-toolchain.toml` en un commit.
