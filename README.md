@@ -72,3 +72,46 @@ Después, desde la raíz del repositorio:
     rustc --version            # comprueba que es la fijada en rust-toolchain.toml
 
 Para cambiar de versión de Rust se modifica la línea `channel` de `rust-toolchain.toml` en un commit.
+
+### Gestor de dependencias
+Se usa **Cargo**, el gestor de paquetes oficial de Rust. Motivos:
+- **Estándar del lenguaje**: las dependencias se declaran en `Cargo.toml` y las versiones exactas quedan fijadas en `Cargo.lock`.
+- **Encaja con el alcance**: el producto mínimamente viable necesita unas 5 dependencias directas, y Cargo funciona igual con pocas que con muchas.
+- **Sin alternativa real**: en Rust no existe otro gestor equiparable al oficial.
+
+No requiere instalación adicional: viene con rustup (ver [Entorno de desarrollo](#entorno-de-desarrollo)).
+
+Justificación completa en [`docs/objetivos/objetivo-3/justificacion-gestores.md`](docs/objetivos/objetivo-3/justificacion-gestores.md) y en el issue [#21](https://github.com/marcocugr/BioVigia/issues/21).
+
+### Gestor de tareas
+Se usa **just**. Cargo no tiene un fichero de tareas que pueda ejecutar `install`, `test` y `check`, y just sí: las tareas viven en el `justfile` de la raíz del repositorio. Motivos:
+
+- **Fichero de tareas explícito**: es el fichero al que apunta `iv.yaml`.
+- **Mantenimiento activo y menor deuda técnica** que cargo-make y cargo-xtask (comparación en el documento de justificación).
+- **Coste asumido**: es una herramienta externa que hay que instalar.
+
+Instalación (una sola vez, ejecutada desde fuera del repositorio):
+
+    cargo install just --locked
+    just --version       # comprueba la instalación
+    just --list          # lista las tareas del justfile
+
+Justificación completa en [`docs/objetivos/objetivo-3/justificacion-gestores.md`](docs/objetivos/objetivo-3/justificacion-gestores.md) y en el issue [#20](https://github.com/marcocugr/BioVigia/issues/20).
+
+### Comprobación sintaxis de una clase
+La entidad que se comprueba es `CatalogoEspecies`, en [`src/dominio/especie.rs`](src/dominio/especie.rs).
+
+**Qué es:** el catálogo de especies que conoce el sistema. Cada especie se identifica por su nombre científico y guarda su nombre común y si es invasora. También admite nombres científicos anteriores (sinónimos), para que un aviso que use un nombre antiguo se asocie a la especie correcta.
+
+**Qué hace:**
+- `registrar` da de alta una especie. Rechaza nombres vacíos y nombres repetidos, incluidos los que chocan con el nombre científico o los nombres anteriores de otra especie.
+- `especie` recibe un nombre (actual o anterior) y devuelve el nombre científico vigente, o un error si la especie es desconocida.
+- `especie_invasora` hace lo mismo, pero solo devuelve la especie si es invasora, en caso contrario devuelve un error.
+
+**Uso en el servicio:** BioVigía solo debe aceptar avistamientos y depredaciones de especies que existan en el catálogo y que sean invasoras. El catálogo es la fuente de la verdad de esa validación, de modo que un aviso con una especie desconocida o no invasora se rechaza antes de entrar en el sistema.
+
+**Orden check:**
+
+    just check
+
+Esta orden ejecuta `cargo check` (mira el [justfile](./justfile)), que comprueba únicamente que el código compila (sintaxis y tipos), incluida esta entidad. Todavía no ejecuta pruebas ni formato ni linter.
