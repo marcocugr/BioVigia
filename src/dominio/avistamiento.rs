@@ -82,6 +82,21 @@ impl Avistamiento {
             evidencia,
         })
     }
+
+    pub fn es_reciente(&self, referencia: SystemTime, dias: u64) -> bool {
+        let Ok(ref_secs) = referencia.duration_since(SystemTime::UNIX_EPOCH) else {
+            return false;
+        };
+        let Ok(self_secs) = self.fecha.duration_since(SystemTime::UNIX_EPOCH) else {
+            return false;
+        };
+        if self_secs > ref_secs {
+            return false;
+        }
+        let dias_ref = ref_secs.as_secs() / 86400;
+        let dias_avistamiento = self_secs.as_secs() / 86400;
+        dias_ref - dias_avistamiento <= dias
+    }
 }
 
 #[derive(Debug, Clone, Default)]
