@@ -126,3 +126,92 @@ La entidad que se comprueba es `CatalogoEspecies`, en [`src/dominio/especie.rs`]
     just check
 
 Esta orden ejecuta `cargo check` (mira el [justfile](./justfile)), que comprueba únicamente que el código compila (sintaxis y tipos), incluida esta entidad. Todavía no ejecuta pruebas ni formato ni linter.
+
+
+## Tests
+
+### Aserciones vs Test Runner
+
+**ASERCIONES:** Son las macros que comparan lo obtenido con lo esperado. En Rust usamos las macros de la biblioteca estándar:
+- `assert!`: verifica que una condición es verdadera
+- `assert_eq!`: verifica que dos valores son iguales
+- `assert_ne!`: verifica que dos valores son diferentes
+
+**TEST RUNNER:** Es el sistema que busca los tests, los ejecuta y genera el informe. En Rust es `cargo test`, integrado en Cargo.
+
+**Por qué no usamos crates externos:** Rust ya trae todo lo necesario en la biblioteca estándar. Los criterios de aceptación se escriben ANTES de elegir herramientas, y `cargo test` + las macros estándar cubren perfectamente las necesidades del proyecto sin añadir dependencias innecesarias.
+
+### Organización de los tests
+
+#### Tests unitarios
+Los tests unitarios van **dentro de cada fichero**, en un módulo `tests` con la anotación `#[cfg(test)]`. Esto permite:
+- Mantener los tests cerca del código que prueban
+- Acceder a funciones y estructuras privadas
+- Ejecutarse solo cuando corremos `cargo test`
+
+Ejemplo de estructura:
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn registrar_especie_valida() {
+        let mut catalogo = CatalogoEspecies::new();
+        assert!(catalogo.registrar(...).is_ok());
+    }
+}
+```
+
+#### Tests de integración
+Los tests de integración van en el directorio `tests/` en la raíz del proyecto. Cada archivo en `tests/` es un crate independiente que:
+- Solo puede acceder a la API pública de la biblioteca
+- Prueba que los módulos funcionan juntos correctamente
+- Se ejecuta en paralelo con otros tests de integración
+
+#### Datos de prueba
+Los archivos HTML y datos de prueba se guardan en `tests/fixtures/`:
+- `tests/fixtures/inaturalist.html`
+- `tests/fixtures/gbif.html`
+- `tests/fixtures/globi.html`
+- `tests/fixtures/gisd.html`
+
+### Principios F.I.R.S.T.
+
+Los tests del proyecto siguen los principios F.I.R.S.T.:
+
+- **Fast (Rápidos)**: Los tests unitarios son instantáneos. Los tests de integración que necesitan I/O (como parsear HTML) se mantienen en `tests/` separados de la lógica de dominio pura.
+
+- **Independent (Independientes)**: Cada test crea sus propios datos y no depende del estado de otros tests. Usamos funciones helper para construir objetos de prueba cuando es necesario.
+
+- **Repeatable (Repetibles)**: No dependemos de servicios externos en los tests. Los datos de APIs se guardan en `tests/fixtures/` y se procesan localmente. La fecha de referencia se pasa como parámetro en lugar de usar el reloj del sistema.
+
+- **Self-validating (Auto-validables)**: Cada test tiene un resultado claro: pasa o falla. No requieren inspección manual de logs o archivos.
+
+- **Timely (Oportunos)**: Los tests se escriben mientras se desarrolla la funcionalidad, no después. Los criterios de aceptación de cada issue se convierten directamente en tests.
+
+### Ejecución de tests
+
+#### Desde cero
+```bash
+just test
+```
+
+Esta orden ejecuta todos los tests.
+
+#### Con directorio de compilación personalizado
+```bash
+CARGO_TARGET_DIR=/tmp/biovigia-build cargo test --locked
+```
+
+El flag `--locked` asegura que no se modifica `Cargo.lock`, como requiere el objetivo 5.
+
+#### Tests específicos
+```bash
+cargo test hu001        # Solo tests que contengan "hu001"
+cargo test --test hu001 # Solo el archivo de integración específico
+```
+
+### Configuración
+
+La clave `test` en `iv.yaml` apunta al archivo de tests de integración principal que verifica la historia de usuario completa.
