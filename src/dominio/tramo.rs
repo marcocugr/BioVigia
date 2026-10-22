@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::fmt::Debug;
 
+use crate::dominio::coordenadas::Coordenadas;
 use crate::dominio::error::ErrorDominio;
 
 pub trait GeometriaTramo: Debug {}
@@ -9,6 +10,8 @@ pub trait GeometriaTramo: Debug {}
 pub struct TramoDeRio {
     codigo: String,
     nombre_rio: String,
+    centro: Coordenadas,
+    radio_metros: f64,
     geometria: Box<dyn GeometriaTramo>,
 }
 
@@ -16,6 +19,8 @@ impl TramoDeRio {
     pub fn new(
         codigo: String,
         nombre_rio: String,
+        centro: Coordenadas,
+        radio_metros: f64,
         geometria: Box<dyn GeometriaTramo>,
     ) -> Result<Self, ErrorDominio> {
         let codigo = codigo.trim().to_owned();
@@ -26,7 +31,17 @@ impl TramoDeRio {
         if nombre_rio.is_empty() {
             return Err(ErrorDominio::NombreRioRequerido);
         }
-        Ok(Self { codigo, nombre_rio, geometria })
+        Ok(Self { codigo, nombre_rio, centro, radio_metros, geometria })
+    }
+
+    pub fn desde_coordenadas(
+        codigo: String,
+        centro: Coordenadas,
+        radio_metros: f64,
+        geometria: Box<dyn GeometriaTramo>,
+    ) -> Result<Self, ErrorDominio> {
+        let nombre_rio = descubrir_nombre_rio(&centro, radio_metros)?;
+        Self::new(codigo, nombre_rio, centro, radio_metros, geometria)
     }
 
     pub fn codigo(&self) -> &str {
@@ -35,6 +50,14 @@ impl TramoDeRio {
 
     pub fn nombre_rio(&self) -> &str {
         &self.nombre_rio
+    }
+
+    pub fn centro(&self) -> &Coordenadas {
+        &self.centro
+    }
+
+    pub fn radio_metros(&self) -> f64 {
+        self.radio_metros
     }
 }
 
@@ -86,4 +109,85 @@ fn normalizar(s: &str) -> String {
             other => other.to_ascii_lowercase(),
         })
         .collect()
+}
+
+fn descubrir_nombre_rio(centro: &Coordenadas, _radio_metros: f64) -> Result<String, ErrorDominio> {
+    let lat = centro.latitud().grados();
+    let lon = centro.longitud().grados();
+    
+    let url = format!(
+        "https://nominatim.openstreetmap.org/reverse?format=json&lat={}&lon={}&zoom=18&accept-language=es",
+        lat, lon
+    );
+    
+    let client = reqwest::blocking::Client::builder()
+        .user_agent("BioVigia/0.2.0")
+        .build()
+        .map_err(|_| ErrorDominio::RioInexistente)?;
+    
+    let response = client
+        .get(&url)
+        .send()
+        .map_err(|_| ErrorDominio::RioInexistente)?;
+    
+    let text = response
+        .text()
+        .map_err(|_| ErrorDominio::RioInexistente)?;
+    
+    let json: serde_json::Value = serde_json::from_str(&text)
+        .map_err(|_| ErrorDominio::RioInexistente)?;
+    
+    if let Some(water) = json["address"]["water"].as_str() {
+        let nombre = water.trim().to_owned();
+        if !nombre.is_empty() {
+            return Ok(nombre);
+        }
+    }
+    
+    if let Some(river) = json["address"]["river"].as_str() {
+        let nombre = river.trim().to_owned();
+        if !nombre.is_empty() {
+            return Ok(nombre);
+        }
+    }
+    
+    if let Some(village) = json["address"]["village"].as_str() {
+        if let Some(rio) = extraer_rio_de_toponimo(village) {
+            return Ok(rio);
+        }
+    }
+    
+    if let Some(town) = json["address"]["town"].as_str() {
+        if let Some(rio) = extraer_rio_de_toponimo(town) {
+            return Ok(rio);
+        }
+    }
+    
+    if let Some(city) = json["address"]["city"].as_str() {
+        if let Some(rio) = extraer_rio_de_toponimo(city) {
+            return Ok(rio);
+        }
+    }
+    
+    Err(ErrorDominio::RioInexistente)
+}
+
+fn extraer_rio_de_toponimo(toponimo: &str) -> Option<String> {
+    let lower = toponimo.to_lowercase();
+    
+    if let Some(pos) = lower.rfind(" de ") {
+        let despues = &toponimo[pos + 4..];
+        if !despues.is_empty() {
+            return Some(despues.trim().to_owned());
+        }
+    }
+    
+    if let Some(pos) = lower.rfind(" del ") {
+        let despues = &toponimo[pos + 5..];
+        if !despues.is_empty() {
+            return Some(despues.trim().to_owned());
+        }
+    }
+    
+    None
 }

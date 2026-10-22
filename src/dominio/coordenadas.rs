@@ -57,6 +57,10 @@ impl Latitud {
             HemisferioNS::Sur => Self::new(-grados),
         }
     }
+
+    pub fn grados(&self) -> f64 {
+        self.0
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -79,6 +83,10 @@ impl Longitud {
             HemisferioEW::Este => Self::new(grados),
             HemisferioEW::Oeste => Self::new(-grados),
         }
+    }
+
+    pub fn grados(&self) -> f64 {
+        self.0
     }
 }
 
@@ -103,5 +111,13 @@ impl Coordenadas {
             Latitud::con_hemisferio(grados_latitud, hemisferio_ns)?,
             Longitud::con_hemisferio(grados_longitud, hemisferio_ew)?,
         ))
+    }
+
+    pub fn latitud(&self) -> &Latitud {
+        &self.latitud
+    }
+
+    pub fn longitud(&self) -> &Longitud {
+        &self.longitud
     }
 }
