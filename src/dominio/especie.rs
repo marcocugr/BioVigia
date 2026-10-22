@@ -98,17 +98,38 @@ impl CatalogoEspecies {
         &self,
         nombre_comun: &str,
     ) -> Result<Vec<&str>, ErrorDominio> {
-        let nombre_comun = nombre_comun.trim();
-        let resultado: Vec<&str> = self
+        let termino = nombre_comun.trim();
+        if termino.is_empty() {
+            return Err(ErrorDominio::NombreComunRequerido);
+        }
+        let termino_norm = normalizar(termino);
+        let mut resultado: Vec<&str> = self
             .especies
             .iter()
-            .filter(|(_, e)| e.nombres_comunes.contains(nombre_comun))
+            .filter(|(_, e)| {
+                e.nombres_comunes
+                    .iter()
+                    .any(|n| normalizar(n).contains(&termino_norm))
+            })
             .map(|(nombre_cientifico, _)| nombre_cientifico.as_str())
             .collect();
         if resultado.is_empty() {
-            Err(ErrorDominio::NombreComunInexistente)
-        } else {
-            Ok(resultado)
+            return Err(ErrorDominio::NombreComunInexistente);
         }
+        resultado.sort_unstable();
+        Ok(resultado)
     }
+}
+
+fn normalizar(s: &str) -> String {
+    s.chars()
+        .map(|c| match c {
+            'á' | 'à' | 'ä' | 'â' | 'Á' | 'À' | 'Ä' | 'Â' => 'a',
+            'é' | 'è' | 'ë' | 'ê' | 'É' | 'È' | 'Ë' | 'Ê' => 'e',
+            'í' | 'ì' | 'ï' | 'î' | 'Í' | 'Ì' | 'Ï' | 'Î' => 'i',
+            'ó' | 'ò' | 'ö' | 'ô' | 'Ó' | 'Ò' | 'Ö' | 'Ô' => 'o',
+            'ú' | 'ù' | 'ü' | 'û' | 'Ú' | 'Ù' | 'Ü' | 'Û' => 'u',
+            other => other.to_ascii_lowercase(),
+        })
+        .collect()
 }
