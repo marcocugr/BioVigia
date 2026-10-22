@@ -84,4 +84,22 @@ impl RedDepredacion {
         self.depredaciones.push(depredacion);
         Ok(())
     }
+
+    pub fn depredadores_de_nombre_comun(
+        &self,
+        catalogo: &CatalogoEspecies,
+        nombre_comun: &str,
+    ) -> Result<Vec<&str>, ErrorDominio> {
+        let presas = catalogo.especies_con_nombre_comun(nombre_comun)?;
+        let mut depredadores: Vec<&str> = self
+            .depredaciones
+            .iter()
+            .filter(|d| presas.contains(&d.nombre_cientifico_presa.as_str()))
+            .map(|d| d.nombre_cientifico_depredador.as_str())
+            .collect::<std::collections::BTreeSet<_>>()
+            .into_iter()
+            .collect();
+        depredadores.sort_unstable();
+        Ok(depredadores)
+    }
 }
