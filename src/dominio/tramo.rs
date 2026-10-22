@@ -65,12 +65,12 @@ impl Rios {
         Ok(())
     }
 
-    pub fn tramos_de_rio(&self, nombre_rio: &str) -> &[TramoDeRio] {
+    pub fn tramos_de_rio(&self, nombre_rio: &str) -> Result<&[TramoDeRio], ErrorDominio> {
         let clave = normalizar(nombre_rio);
         self.tramos_por_rio
             .get(&clave)
             .map(Vec::as_slice)
-            .unwrap_or(&[])
+            .ok_or(ErrorDominio::RioInexistente)
     }
 }
 
