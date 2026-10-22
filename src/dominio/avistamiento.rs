@@ -97,6 +97,18 @@ impl Avistamiento {
         let dias_avistamiento = self_secs.as_secs() / 86400;
         dias_ref - dias_avistamiento <= dias
     }
+
+    pub fn pertenece_a_rio(&self, rios: &crate::dominio::tramo::Rios, nombre_rio: &str) -> Result<bool, ErrorDominio> {
+        let tramos = rios.tramos_de_rio(nombre_rio)?;
+        
+        for tramo in tramos {
+            if tramo.contiene_coordenadas(&self.coordenadas, crate::dominio::tramo::RADIO_ALREDEDORES_METROS)? {
+                return Ok(true);
+            }
+        }
+        
+        Ok(false)
+    }
 }
 
 #[derive(Debug, Clone, Default)]

@@ -4,6 +4,8 @@ use std::fmt::Debug;
 use crate::dominio::coordenadas::Coordenadas;
 use crate::dominio::error::ErrorDominio;
 
+pub const RADIO_ALREDEDORES_METROS: f64 = 500.0;
+
 pub trait GeometriaTramo: Debug {
     fn contiene_coordenadas(&self, coordenadas: &Coordenadas, radio_metros: f64) -> Result<bool, ErrorDominio>;
 }
