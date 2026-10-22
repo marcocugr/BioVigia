@@ -119,3 +119,46 @@ fn test_gisd_integra_con_catalogo() {
     assert!(resultado.is_ok(), "El visón debe registrarse correctamente");
     assert!(es_invasora, "GISD debe haber identificado al visón como invasor");
 }
+
+use procesadores_html::gbif::procesar_gbif;
+
+#[test]
+fn test_gbif_integra_con_catalogo_vison() {
+    let html = include_str!("fixtures/gbif/vison.html");
+    
+    let datos = procesar_gbif(html).expect("Debe extraer datos del visón");
+    
+    let mut catalogo = CatalogoEspecies::new();
+    
+    // Usar los datos extraídos para registrar en el catálogo
+    let resultado = catalogo.registrar(
+        datos.nombre_cientifico_actual.clone(),
+        datos.nombres_comunes_espanol.clone(),
+        true, // Ya sabemos por GISD que es invasora
+        datos.nombres_anteriores.clone(),
+    );
+    
+    assert!(resultado.is_ok(), "Debe registrarse correctamente");
+    assert_eq!(datos.nombre_cientifico_actual, "Neogale vison");
+    assert!(datos.nombres_anteriores.len() >= 2, "Debe tener al menos 2 sinónimos");
+    assert!(datos.nombres_comunes_espanol.len() > 0, "Debe tener nombres en español");
+}
+
+#[test]
+fn test_gbif_integra_con_catalogo_cangrejo() {
+    let html = include_str!("fixtures/gbif/cangrejo.html");
+    
+    let datos = procesar_gbif(html).expect("Debe extraer datos del cangrejo");
+    
+    let mut catalogo = CatalogoEspecies::new();
+    
+    let resultado = catalogo.registrar(
+        datos.nombre_cientifico_actual.clone(),
+        datos.nombres_comunes_espanol.clone(),
+        false, // No es invasora (es la presa)
+        datos.nombres_anteriores.clone(),
+    );
+    
+    assert!(resultado.is_ok(), "Debe registrarse correctamente");
+    assert_eq!(datos.nombre_cientifico_actual, "Procambarus clarkii");
+}
