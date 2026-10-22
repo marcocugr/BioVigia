@@ -4,7 +4,7 @@ use crate::dominio::error::ErrorDominio;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Especie {
-    nombre_comun: String,
+    nombres_comunes: HashSet<String>,
     invasora: bool,
 }
 
@@ -22,12 +22,11 @@ impl CatalogoEspecies {
     pub fn registrar(
         &mut self,
         nombre_cientifico: String,
-        nombre_comun: String,
+        nombres_comunes: Vec<String>,
         invasora: bool,
         nombres_anteriores: Vec<String>,
     ) -> Result<(), ErrorDominio> {
         let nombre_cientifico = nombre_cientifico.trim().to_owned();
-        let nombre_comun = nombre_comun.trim().to_owned();
         let nombres_anteriores: Vec<String> = nombres_anteriores
             .iter()
             .map(|n| n.trim().to_owned())
@@ -35,7 +34,20 @@ impl CatalogoEspecies {
         if nombre_cientifico.is_empty() || nombres_anteriores.iter().any(|n| n.is_empty()) {
             return Err(ErrorDominio::NombreCientificoRequerido);
         }
-        if nombre_comun.is_empty() {
+        if nombres_comunes.is_empty() {
+            return Err(ErrorDominio::NombreComunRequerido);
+        }
+        let nombres_comunes: HashSet<String> = nombres_comunes
+            .into_iter()
+            .map(|n| n.trim().to_owned())
+            .filter(|n| {
+                if n.is_empty() {
+                    return false;
+                }
+                true
+            })
+            .collect();
+        if nombres_comunes.is_empty() {
             return Err(ErrorDominio::NombreComunRequerido);
         }
         let mut nuevos = HashSet::new();
@@ -54,7 +66,7 @@ impl CatalogoEspecies {
         self.especies.insert(
             nombre_cientifico,
             Especie {
-                nombre_comun,
+                nombres_comunes,
                 invasora,
             },
         );
