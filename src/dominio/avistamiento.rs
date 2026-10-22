@@ -129,6 +129,13 @@ impl RegistroAvistamientos {
         self.avistamientos.insert(clave, avistamiento);
         Ok(())
     }
+
+    pub fn avistamientos_de_especie(&self, nombre_cientifico: &str) -> Vec<&Avistamiento> {
+        self.avistamientos
+            .values()
+            .filter(|a| a.nombre_cientifico_especie == nombre_cientifico)
+            .collect()
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
