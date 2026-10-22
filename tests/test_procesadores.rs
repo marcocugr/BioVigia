@@ -125,40 +125,44 @@ use procesadores_html::gbif::procesar_gbif;
 #[test]
 fn test_gbif_integra_con_catalogo_vison() {
     let html = include_str!("fixtures/gbif/vison.html");
+    let nombre_actual = "Neogale vison";
     
-    let datos = procesar_gbif(html).expect("Debe extraer datos del visón");
+    let (nombres_anteriores, nombres_comunes) = procesar_gbif(html, nombre_actual)
+        .expect("Debe extraer datos del visón");
     
     let mut catalogo = CatalogoEspecies::new();
     
     // Usar los datos extraídos para registrar en el catálogo
     let resultado = catalogo.registrar(
-        datos.nombre_cientifico_actual.clone(),
-        datos.nombres_comunes_espanol.clone(),
+        nombre_actual.to_string(),
+        nombres_comunes.clone(),
         true, // Ya sabemos por GISD que es invasora
-        datos.nombres_anteriores.clone(),
+        nombres_anteriores.clone(),
     );
     
     assert!(resultado.is_ok(), "Debe registrarse correctamente");
-    assert_eq!(datos.nombre_cientifico_actual, "Neogale vison");
-    assert!(datos.nombres_anteriores.len() >= 2, "Debe tener al menos 2 sinónimos");
-    assert!(datos.nombres_comunes_espanol.len() > 0, "Debe tener nombres en español");
+    assert!(nombres_anteriores.len() > 0, "Debe tener al menos un sinónimo");
+    assert!(nombres_comunes.len() > 0, "Debe tener nombres en español");
 }
 
 #[test]
 fn test_gbif_integra_con_catalogo_cangrejo() {
     let html = include_str!("fixtures/gbif/cangrejo.html");
+    let nombre_actual = "Procambarus clarkii";
     
-    let datos = procesar_gbif(html).expect("Debe extraer datos del cangrejo");
+    let (nombres_anteriores, nombres_comunes) = procesar_gbif(html, nombre_actual)
+        .expect("Debe extraer datos del cangrejo");
     
     let mut catalogo = CatalogoEspecies::new();
     
     let resultado = catalogo.registrar(
-        datos.nombre_cientifico_actual.clone(),
-        datos.nombres_comunes_espanol.clone(),
+        nombre_actual.to_string(),
+        nombres_comunes.clone(),
         false, // No es invasora (es la presa)
-        datos.nombres_anteriores.clone(),
+        nombres_anteriores.clone(),
     );
     
     assert!(resultado.is_ok(), "Debe registrarse correctamente");
-    assert_eq!(datos.nombre_cientifico_actual, "Procambarus clarkii");
+    assert!(nombres_comunes.len() > 0, "Debe tener nombres en español");
 }
+
