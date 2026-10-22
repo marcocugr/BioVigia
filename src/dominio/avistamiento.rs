@@ -103,3 +103,18 @@ impl RegistroAvistamientos {
         Ok(())
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PresenciaDepredador {
+    PresenciaDetectada { cantidad: usize },
+    SinRegistrosRecientes,
+}
+
+impl PresenciaDepredador {
+    pub fn desde_avistamientos(avistamientos: &[Avistamiento]) -> Self {
+        match avistamientos.len() {
+            0 => Self::SinRegistrosRecientes,
+            n => Self::PresenciaDetectada { cantidad: n },
+        }
+    }
+}
