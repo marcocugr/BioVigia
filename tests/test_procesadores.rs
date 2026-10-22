@@ -3,6 +3,7 @@ mod procesadores_html;
 use biovigia::dominio::depredacion::{Depredacion, FaseVital, RedDepredacion};
 use biovigia::dominio::especie::CatalogoEspecies;
 use procesadores_html::globi::procesar_globi;
+use procesadores_html::gisd::procesar_gisd;
 use std::collections::BTreeSet;
 
 #[test]
@@ -82,4 +83,39 @@ fn test_globi_crea_red_depredacion() {
     let depredadores_cangrejo = red.depredadores_de_nombre_comun(&catalogo, "cangrejo").unwrap();
     assert!(depredadores_cangrejo.contains(&"Neogale vison"), 
         "La red debe contener Neogale vison como depredador del cangrejo");
+}
+
+#[test]
+fn test_gisd_reconoce_vison_como_invasor() {
+    let html = include_str!("fixtures/gisd.html");
+    
+    // Probar con nombre actual y anteriores
+    let nombres = vec!["Neogale vison", "Mustela vison", "Neovison vison"];
+    
+    let es_invasora = procesar_gisd(html, &nombres);
+    
+    assert!(es_invasora, "GISD debe reconocer el visón como invasor");
+}
+
+#[test]
+fn test_gisd_integra_con_catalogo() {
+    let html = include_str!("fixtures/gisd.html");
+    
+    let mut catalogo = CatalogoEspecies::new();
+    
+    // Nombres a probar en GISD
+    let nombres_probar = vec!["Neogale vison", "Mustela vison", "Neovison vison"];
+    
+    let es_invasora = procesar_gisd(html, &nombres_probar);
+    
+    // Registrar en catálogo con el booleano correcto
+    let resultado = catalogo.registrar(
+        "Neogale vison".to_string(),
+        vec!["visón americano".to_string()],
+        es_invasora, // true porque GISD la encontró
+        vec!["Mustela vison".to_string(), "Neovison vison".to_string()],
+    );
+    
+    assert!(resultado.is_ok(), "El visón debe registrarse correctamente");
+    assert!(es_invasora, "GISD debe haber identificado al visón como invasor");
 }
