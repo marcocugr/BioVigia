@@ -27,6 +27,10 @@ impl TramoDeRio {
         }
         Ok(Self { codigo, nombre_rio, geometria })
     }
+
+    pub fn nombre_rio(&self) -> &str {
+        &self.nombre_rio
+    }
 }
 
 impl PartialEq for TramoDeRio {
