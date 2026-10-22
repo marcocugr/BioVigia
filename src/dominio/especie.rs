@@ -93,4 +93,22 @@ impl CatalogoEspecies {
             Err(ErrorDominio::EspecieNoInvasora)
         }
     }
+
+    pub fn especies_con_nombre_comun(
+        &self,
+        nombre_comun: &str,
+    ) -> Result<Vec<&str>, ErrorDominio> {
+        let nombre_comun = nombre_comun.trim();
+        let resultado: Vec<&str> = self
+            .especies
+            .iter()
+            .filter(|(_, e)| e.nombres_comunes.contains(nombre_comun))
+            .map(|(nombre_cientifico, _)| nombre_cientifico.as_str())
+            .collect();
+        if resultado.is_empty() {
+            Err(ErrorDominio::NombreComunInexistente)
+        } else {
+            Ok(resultado)
+        }
+    }
 }
