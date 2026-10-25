@@ -1,2 +1,5 @@
 lenguaje: rust
 entidad: src/dominio/especie.rs
+automatizar:
+  fichero: justfile
+  orden: just
