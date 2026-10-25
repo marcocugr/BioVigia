@@ -119,8 +119,6 @@ La entidad que se comprueba es `CatalogoEspecies`, en [`src/dominio/especie.rs`]
 - `especie` recibe un nombre (actual o anterior) y devuelve el nombre científico vigente, o un error si la especie es desconocida.
 - `especie_invasora` hace lo mismo, pero solo devuelve la especie si es invasora, en caso contrario devuelve un error.
 
-**Uso en el servicio:** BioVigía solo debe aceptar avistamientos y depredaciones de especies que existan en el catálogo y que sean invasoras. El catálogo es la fuente de la verdad de esa validación, de modo que un aviso con una especie desconocida o no invasora se rechaza antes de entrar en el sistema.
-
 **Orden check:**
 
     just check
