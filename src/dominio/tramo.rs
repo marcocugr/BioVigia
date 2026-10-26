@@ -3,6 +3,7 @@ use std::fmt::Debug;
 
 use crate::dominio::coordenadas::Coordenadas;
 use crate::dominio::error::ErrorDominio;
+use crate::dominio::texto::normalizar;
 
 pub const RADIO_ALREDEDORES_METROS: f64 = 500.0;
 
@@ -152,18 +153,4 @@ impl Rios {
             .map(Vec::as_slice)
             .ok_or(ErrorDominio::RioInexistente)
     }
-}
-
-fn normalizar(s: &str) -> String {
-    s.trim()
-        .chars()
-        .map(|c| match c {
-            'á' | 'à' | 'ä' | 'â' | 'Á' | 'À' | 'Ä' | 'Â' => 'a',
-            'é' | 'è' | 'ë' | 'ê' | 'É' | 'È' | 'Ë' | 'Ê' => 'e',
-            'í' | 'ì' | 'ï' | 'î' | 'Í' | 'Ì' | 'Ï' | 'Î' => 'i',
-            'ó' | 'ò' | 'ö' | 'ô' | 'Ó' | 'Ò' | 'Ö' | 'Ô' => 'o',
-            'ú' | 'ù' | 'ü' | 'û' | 'Ú' | 'Ù' | 'Ü' | 'Û' => 'u',
-            other => other.to_ascii_lowercase(),
-        })
-        .collect()
 }
