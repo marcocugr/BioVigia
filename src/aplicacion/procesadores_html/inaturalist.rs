@@ -125,10 +125,10 @@ fn extraer_coordenadas(html: &str) -> Option<(f64, f64)> {
     coordenadas_de_enlace_de_mapa(html).or_else(|| coordenadas_de_atributos(html))
 }
 
-/// Lee latitud y longitud de un enlace de mapa con la forma /@latitud,longitud.
+/// Lee latitud y longitud del primer enlace con la forma /@latitud,longitud que las tenga.
 fn coordenadas_de_enlace_de_mapa(html: &str) -> Option<(f64, f64)> {
-    let posicion = html.find("/@")?;
-    par_de_coordenadas(ventana(html, posicion + 2, 48))
+    html.match_indices("/@")
+        .find_map(|(posicion, _)| par_de_coordenadas(ventana(html, posicion + 2, 48)))
 }
 
 /// Lee dos números separados por coma si son una latitud y una longitud posibles.
@@ -162,17 +162,30 @@ fn numero_de_atributo(html: &str, atributo: &str) -> Option<f64> {
     valor[..valor.find('"')?].trim().parse().ok()
 }
 
-/// Deduce la calidad buscando el nombre de cada grado en el texto de la página.
+/// Lee la calidad del texto que sigue a "quality_grade", sin contar los enlaces de filtro.
 fn extraer_calidad(html: &str) -> Option<GradoCalidad> {
-    if html.contains("Research Grade") || html.contains("research ") {
-        Some(GradoCalidad::Investigacion)
-    } else if html.contains("Needs ID") || html.contains("needs-id") {
-        Some(GradoCalidad::NecesitaIdentificacion)
-    } else if html.contains("Casual") || html.contains("casual") {
-        Some(GradoCalidad::Casual)
-    } else {
-        None
-    }
+    const MARCA: &str = "quality_grade";
+    html.match_indices(MARCA)
+        .filter(|(posicion, _)| {
+            !matches!(html[..*posicion].chars().next_back(), Some('?' | '&' | '/'))
+        })
+        .find_map(|(posicion, _)| grado_en(ventana(html, posicion + MARCA.len(), 24)))
+}
+
+/// Reconoce el grado de calidad que aparece primero en el texto.
+fn grado_en(texto: &str) -> Option<GradoCalidad> {
+    let texto = texto.to_ascii_lowercase();
+    [
+        ("research", GradoCalidad::Investigacion),
+        ("needs_id", GradoCalidad::NecesitaIdentificacion),
+        ("needs id", GradoCalidad::NecesitaIdentificacion),
+        ("needs-id", GradoCalidad::NecesitaIdentificacion),
+        ("casual", GradoCalidad::Casual),
+    ]
+    .into_iter()
+    .filter_map(|(palabra, grado)| texto.find(palabra).map(|posicion| (posicion, grado)))
+    .min_by_key(|(posicion, _)| *posicion)
+    .map(|(_, grado)| grado)
 }
 
 /// Lee el nombre del observador de la etiqueta DC.creator.
@@ -183,14 +196,17 @@ fn extraer_autor(html: &str) -> Option<String> {
         .find(|autor| !autor.is_empty())
 }
 
-/// Lee la URL de la foto de la etiqueta og:image.
+/// Recoge las URL de todas las etiquetas og:image, sin repetir y solo las http o https.
 fn extraer_urls_fotos(html: &str) -> Vec<String> {
-    contenidos_de_etiquetas(html, "property", "og:image")
-        .into_iter()
-        .map(|url| url.trim().to_owned())
-        .find(|url| !url.is_empty())
-        .into_iter()
-        .collect()
+    let mut urls: Vec<String> = Vec::new();
+    for url in contenidos_de_etiquetas(html, "property", "og:image") {
+        let url = url.trim().to_owned();
+        let es_http = url.starts_with("https://") || url.starts_with("http://");
+        if es_http && !urls.contains(&url) {
+            urls.push(url);
+        }
+    }
+    urls
 }
 
 #[cfg(test)]
@@ -210,6 +226,7 @@ mod tests {
             r#"<script>window.INITIAL_OBSERVATION_ID = "395192703";</script>"#,
             r#"<a href="https://www.google.com/maps/@39.85,-4.55,15z/data=!3m1">mapa</a>"#,
             r#"<span class="quality_grade research">Research Grade</span>"#,
+            "<section><span>Casual</span><span>Needs ID</span><span>Research Grade</span></section>",
             "</body></html>"
         )
         .to_string()
@@ -394,5 +411,84 @@ mod tests {
             observacion.a_avistamiento(&catalogo()),
             Err(ErrorFuente::Dominio(crate::dominio::error::ErrorDominio::UrlFotoInvalida))
         );
+    }
+
+    #[test]
+    fn las_coordenadas_se_leen_del_primer_enlace_de_mapa_que_las_tenga() {
+        let html = html_del_vison().replace(
+            "<body>",
+            r#"<body><a href="https://www.inaturalist.org/people/@marco">perfil</a>"#,
+        );
+        let observacion = procesar_inaturalist(&html).unwrap();
+        assert_eq!((observacion.latitud, observacion.longitud), (39.85, -4.55));
+    }
+
+    #[test]
+    fn la_calidad_se_lee_de_quality_grade() {
+        for (grado, esperado) in [
+            ("research", GradoCalidad::Investigacion),
+            ("needs_id", GradoCalidad::NecesitaIdentificacion),
+            ("casual", GradoCalidad::Casual),
+        ] {
+            let html = html_del_vison().replace("quality_grade research", &format!("quality_grade {grado}"));
+            assert_eq!(procesar_inaturalist(&html).unwrap().calidad, Some(esperado), "con {grado}");
+        }
+    }
+
+    #[test]
+    fn la_calidad_se_lee_tambien_de_un_json() {
+        let html = html_del_vison().replace(
+            r#"class="quality_grade research""#,
+            r#"data-datos='{"quality_grade":"needs_id"}'"#,
+        );
+        assert_eq!(
+            procesar_inaturalist(&html).unwrap().calidad,
+            Some(GradoCalidad::NecesitaIdentificacion)
+        );
+    }
+
+    #[test]
+    fn un_enlace_de_filtro_con_quality_grade_no_cuenta_como_la_calidad() {
+        let html = html_del_vison().replace(
+            "<body>",
+            r#"<body><a href="/observations?taxon_id=1&quality_grade=casual">casuales</a>"#,
+        );
+        assert_eq!(procesar_inaturalist(&html).unwrap().calidad, Some(GradoCalidad::Investigacion));
+    }
+
+    #[test]
+    fn sin_quality_grade_la_calidad_se_queda_sin_dato_aunque_la_pagina_nombre_los_tres_grados() {
+        let html = html_del_vison().replace("quality_grade", "otra_clase");
+        let observacion = procesar_inaturalist(&html).unwrap();
+        assert!(html.contains("Research Grade") && html.contains("Casual"));
+        assert_eq!(observacion.calidad, None);
+    }
+
+    #[test]
+    fn las_fotos_son_todas_las_de_og_image_en_orden_sin_repetir() {
+        let html = html_del_vison().replace(
+            "<title>",
+            concat!(
+                r#"<meta property="og:image" content="https://inaturalist-open-data.s3.amazonaws.com/photos/222/large.jpg">"#,
+                r#"<meta content="https://inaturalist-open-data.s3.amazonaws.com/photos/222/large.jpg" property="og:image">"#,
+                "<title>"
+            ),
+        );
+        assert_eq!(
+            procesar_inaturalist(&html).unwrap().urls_fotos,
+            vec![
+                "https://inaturalist-open-data.s3.amazonaws.com/photos/111/large.jpg",
+                "https://inaturalist-open-data.s3.amazonaws.com/photos/222/large.jpg",
+            ]
+        );
+    }
+
+    #[test]
+    fn las_fotos_que_no_son_http_o_https_se_descartan() {
+        let html = html_del_vison().replace(
+            "<title>",
+            r#"<meta content="//cdn.ejemplo.org/a.jpg" property="og:image"><meta content="" property="og:image"><title>"#,
+        );
+        assert_eq!(procesar_inaturalist(&html).unwrap().urls_fotos.len(), 1);
     }
 }

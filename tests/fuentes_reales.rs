@@ -39,7 +39,7 @@ fn inaturalist_cangrejo_da_los_datos_de_la_observacion_394426183() {
     assert_eq!(observacion.fecha, medianoche_utc(1_787_616_000));
     assert!(observacion.latitud > 39.0 && observacion.latitud < 41.0);
     assert!(observacion.longitud > -5.0 && observacion.longitud < -3.0);
-    assert!(observacion.calidad.is_some());
+    assert_eq!(observacion.calidad, Some(GradoCalidad::Investigacion));
     assert!(!observacion.urls_fotos.is_empty());
 }
 
