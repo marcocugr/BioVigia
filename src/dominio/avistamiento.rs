@@ -4,6 +4,7 @@ use std::time::SystemTime;
 use crate::dominio::coordenadas::Coordenadas;
 use crate::dominio::error::ErrorDominio;
 use crate::dominio::especie::CatalogoEspecies;
+use crate::dominio::tramo::{RADIO_ALREDEDORES_METROS, Rios};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Fuente {
@@ -83,32 +84,32 @@ impl Avistamiento {
         })
     }
 
+    /// Indica si el avistamiento es del día de la referencia o de hasta `dias` días antes (días UTC).
     pub fn es_reciente(&self, referencia: SystemTime, dias: u64) -> bool {
-        let Ok(ref_secs) = referencia.duration_since(SystemTime::UNIX_EPOCH) else {
+        let (Some(dia_referencia), Some(dia_avistamiento)) =
+            (dia_utc(referencia), dia_utc(self.fecha))
+        else {
             return false;
         };
-        let Ok(self_secs) = self.fecha.duration_since(SystemTime::UNIX_EPOCH) else {
-            return false;
-        };
-        if self_secs > ref_secs {
-            return false;
-        }
-        let dias_ref = ref_secs.as_secs() / 86400;
-        let dias_avistamiento = self_secs.as_secs() / 86400;
-        dias_ref - dias_avistamiento <= dias
+        let antiguedad = dia_referencia - dia_avistamiento;
+        antiguedad >= 0 && antiguedad as u64 <= dias
     }
 
-    pub fn pertenece_a_rio(&self, rios: &crate::dominio::tramo::Rios, nombre_rio: &str) -> Result<bool, ErrorDominio> {
-        let tramos = rios.tramos_de_rio(nombre_rio)?;
-        
-        for tramo in tramos {
-            if tramo.contiene_coordenadas(&self.coordenadas, crate::dominio::tramo::RADIO_ALREDEDORES_METROS)? {
+    /// Indica si el avistamiento cae en algún tramo del río o en sus alrededores.
+    pub fn pertenece_a_rio(&self, rios: &Rios, nombre_rio: &str) -> Result<bool, ErrorDominio> {
+        for tramo in rios.tramos_de_rio(nombre_rio)? {
+            if tramo.contiene_coordenadas(&self.coordenadas, RADIO_ALREDEDORES_METROS)? {
                 return Ok(true);
             }
         }
-        
         Ok(false)
     }
+}
+
+/// Devuelve los días UTC desde el 1 de enero de 1970, o nada si el instante es anterior.
+fn dia_utc(instante: SystemTime) -> Option<i64> {
+    let segundos = instante.duration_since(SystemTime::UNIX_EPOCH).ok()?.as_secs();
+    i64::try_from(segundos / 86_400).ok()
 }
 
 #[derive(Debug, Clone, Default)]
@@ -150,5 +151,107 @@ impl PresenciaDepredador {
             0 => Self::SinRegistrosRecientes,
             n => Self::PresenciaDetectada { cantidad: n },
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::dominio::coordenadas::{Latitud, Longitud};
+    use std::time::Duration;
+
+    const DIA: u64 = 86_400;
+    const MEDIODIA_1_SEP_2026: u64 = 1_788_264_000;
+    const MEDIANOCHE_28_AGO_2026: u64 = 1_787_875_200;
+
+    fn instante(segundos: u64) -> SystemTime {
+        SystemTime::UNIX_EPOCH + Duration::from_secs(segundos)
+    }
+
+    fn catalogo_con_vison() -> CatalogoEspecies {
+        let mut catalogo = CatalogoEspecies::new();
+        catalogo
+            .registrar("Neogale vison".into(), vec!["Visón americano".into()], true, vec!["Mustela vison".into()])
+            .unwrap();
+        catalogo
+    }
+
+    fn avistamiento_en(segundos: u64) -> Avistamiento {
+        Avistamiento::new(
+            &catalogo_con_vison(),
+            Fuente::INaturalist,
+            "obs-1".into(),
+            "Neogale vison",
+            instante(segundos),
+            Coordenadas::new(Latitud::new(39.85).unwrap(), Longitud::new(-4.55).unwrap()),
+            None,
+            EvidenciaFotografica::new(None, vec![]).unwrap(),
+        )
+        .unwrap()
+    }
+
+    #[test]
+    fn un_avistamiento_de_hace_x_menos_1_dias_es_reciente() {
+        let avistamiento = avistamiento_en(MEDIODIA_1_SEP_2026 - 14 * DIA);
+        assert!(avistamiento.es_reciente(instante(MEDIODIA_1_SEP_2026), 15));
+    }
+
+    #[test]
+    fn un_avistamiento_de_hace_exactamente_x_dias_es_reciente() {
+        let avistamiento = avistamiento_en(MEDIODIA_1_SEP_2026 - 15 * DIA);
+        assert!(avistamiento.es_reciente(instante(MEDIODIA_1_SEP_2026), 15));
+    }
+
+    #[test]
+    fn un_avistamiento_de_hace_x_mas_1_dias_no_es_reciente() {
+        let avistamiento = avistamiento_en(MEDIODIA_1_SEP_2026 - 16 * DIA);
+        assert!(!avistamiento.es_reciente(instante(MEDIODIA_1_SEP_2026), 15));
+    }
+
+    #[test]
+    fn un_avistamiento_del_mismo_dia_es_reciente_aunque_sea_mas_tarde_que_la_referencia() {
+        let avistamiento = avistamiento_en(MEDIANOCHE_28_AGO_2026 + 8 * 3600 + 44 * 60);
+        assert!(avistamiento.es_reciente(instante(MEDIANOCHE_28_AGO_2026), 15));
+    }
+
+    #[test]
+    fn un_avistamiento_del_mismo_dia_y_anterior_a_la_referencia_es_reciente() {
+        let avistamiento = avistamiento_en(MEDIANOCHE_28_AGO_2026 + 8 * 3600);
+        assert!(avistamiento.es_reciente(instante(MEDIANOCHE_28_AGO_2026 + 12 * 3600), 15));
+    }
+
+    #[test]
+    fn un_avistamiento_posterior_a_la_referencia_en_otro_dia_no_es_reciente() {
+        let avistamiento = avistamiento_en(MEDIANOCHE_28_AGO_2026 + DIA);
+        assert!(!avistamiento.es_reciente(instante(MEDIANOCHE_28_AGO_2026 + DIA - 1), 15));
+    }
+
+    #[test]
+    fn con_cero_dias_solo_cuenta_el_mismo_dia() {
+        let avistamiento = avistamiento_en(MEDIANOCHE_28_AGO_2026 + 3600);
+        assert!(avistamiento.es_reciente(instante(MEDIANOCHE_28_AGO_2026 + 20 * 3600), 0));
+        assert!(!avistamiento.es_reciente(instante(MEDIANOCHE_28_AGO_2026 + DIA), 0));
+    }
+
+    #[test]
+    fn el_ultimo_segundo_del_dia_anterior_no_cuenta_con_cero_dias() {
+        let avistamiento = avistamiento_en(MEDIANOCHE_28_AGO_2026 - 1);
+        assert!(!avistamiento.es_reciente(instante(MEDIANOCHE_28_AGO_2026), 0));
+    }
+
+    #[test]
+    fn un_instante_anterior_a_1970_no_es_reciente() {
+        let avistamiento = Avistamiento::new(
+            &catalogo_con_vison(),
+            Fuente::INaturalist,
+            "obs-2".into(),
+            "Neogale vison",
+            SystemTime::UNIX_EPOCH - Duration::from_secs(DIA),
+            Coordenadas::new(Latitud::new(0.0).unwrap(), Longitud::new(0.0).unwrap()),
+            None,
+            EvidenciaFotografica::new(None, vec![]).unwrap(),
+        )
+        .unwrap();
+        assert!(!avistamiento.es_reciente(instante(MEDIODIA_1_SEP_2026), 100_000));
     }
 }
