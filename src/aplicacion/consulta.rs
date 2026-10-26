@@ -24,11 +24,11 @@ pub fn consultar_zona(
     rios: &Rios,
 ) -> Result<Vec<ResultadoDepredador>, ErrorDominio> {
     let _presas = catalogo.especies_con_nombre_comun(nombre_comun_presa)?;
-    
+
     let depredadores = red.depredadores_de_nombre_comun(catalogo, nombre_comun_presa)?;
-    
+
     let _tramos = rios.tramos_de_rio(nombre_rio)?;
-    
+
     let mut resultados: Vec<ResultadoDepredador> = depredadores
         .iter()
         .map(|nombre_cientifico| {
@@ -39,10 +39,10 @@ pub fn consultar_zona(
                 .filter(|a| a.pertenece_a_rio(rios, nombre_rio).unwrap_or(false))
                 .map(|a| (*a).clone())
                 .collect();
-            
+
             let cantidad = avistamientos_filtrados.len();
             let presencia = PresenciaDepredador::desde_avistamientos(&avistamientos_filtrados);
-            
+
             ResultadoDepredador {
                 nombre_cientifico: nombre_cientifico.to_string(),
                 cantidad_avistamientos: cantidad,
@@ -50,8 +50,8 @@ pub fn consultar_zona(
             }
         })
         .collect();
-    
+
     resultados.sort_by(|a, b| a.nombre_cientifico.cmp(&b.nombre_cientifico));
-    
+
     Ok(resultados)
 }

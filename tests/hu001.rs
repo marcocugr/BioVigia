@@ -186,7 +186,7 @@ fn hu001_pescador_consulta_especie_invasora_en_rio() {
     // Nombre común a buscar (el pescador busca "cangrejo")
     let nombre_comun_presa = "cangrejo";
     
-    let resultado = biovigia::dominio::consulta::consultar_zona(
+    let resultado = biovigia::aplicacion::consulta::consultar_zona(
         nombre_comun_presa,
         nombre_rio_usuario,  // Usar el nombre proporcionado por el pescador
         dias_ventana,

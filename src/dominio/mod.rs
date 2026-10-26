@@ -1,5 +1,4 @@
 pub mod avistamiento;
-pub mod consulta;
 pub mod coordenadas;
 pub mod depredacion;
 pub mod error;
