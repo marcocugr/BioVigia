@@ -5,7 +5,7 @@
 /// 2. GBIF → Enriquecer con sinónimos y nombres comunes
 /// 3. GISD → Verificar si es invasora
 /// 4. GloBI → Obtener relaciones de depredación
-/// 5. Crear tramos de río usando TramoDeRio::desde_coordenadas (descubre nombre vía API)
+/// 5. Crear el tramo de río con el nombre que da el pescador
 /// 6. consultar_zona() → Analizar la zona con ventana temporal
 
 mod procesadores_html;
@@ -170,8 +170,6 @@ fn hu001_pescador_consulta_especie_invasora_en_rio() {
     let tramo = TramoDeRio::new(
         "TRAMO-001".to_string(),
         nombre_rio_usuario.to_string(),
-        coords_vison,  // Centro en las coordenadas del avistamiento
-        5000.0,        // Radio de 5 km
         Box::new(linea),
     ).expect("Debe crear tramo");
     
