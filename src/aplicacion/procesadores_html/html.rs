@@ -38,6 +38,24 @@ fn valor_de_atributo(etiqueta: &str, atributo: &str) -> Option<String> {
     Some(resto[..fin].to_owned())
 }
 
+/// Quita las etiquetas HTML y deja un espacio en su lugar.
+pub(super) fn texto_sin_etiquetas(html: &str) -> String {
+    let mut texto = String::with_capacity(html.len());
+    let mut dentro_de_etiqueta = false;
+    for letra in html.chars() {
+        match letra {
+            '<' => dentro_de_etiqueta = true,
+            '>' => {
+                dentro_de_etiqueta = false;
+                texto.push(' ');
+            }
+            _ if !dentro_de_etiqueta => texto.push(letra),
+            _ => {}
+        }
+    }
+    texto
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -95,5 +113,11 @@ mod tests {
         assert!(contenidos_de_etiquetas("", "name", "x").is_empty());
         assert!(contenidos_de_etiquetas(r#"<meta name="x" content="a""#, "name", "x").is_empty());
         assert!(contenidos_de_etiquetas(r#"name="x" content="a">"#, "name", "x").is_empty());
+    }
+
+    #[test]
+    fn el_texto_sin_etiquetas_separa_con_espacios() {
+        let texto = texto_sin_etiquetas("resulted in <strong>1</strong> species");
+        assert_eq!(texto.split_whitespace().collect::<Vec<_>>(), vec!["resulted", "in", "1", "species"]);
     }
 }

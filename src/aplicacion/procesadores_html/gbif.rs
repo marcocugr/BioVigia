@@ -1,5 +1,15 @@
 use super::ErrorFuente;
-use super::html::ventana;
+use super::html::{texto_sin_etiquetas, ventana};
+
+const TITULO_SINONIMOS: &str = "Sinónimos y combinaciones";
+const SECCIONES_SIGUIENTES: [&str; 5] = [
+    "Nombres comunes",
+    "Tratamientos",
+    "Bibliografía",
+    "Identificadores",
+    "Imágenes de ocurrencias",
+];
+const MAXIMO_SIN_CONTADOR: usize = 30;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FichaGbif {
@@ -20,15 +30,39 @@ pub fn procesar_gbif(html: &str, nombre_actual: &str) -> Result<FichaGbif, Error
     })
 }
 
-/// Recoge los nombres científicos en cursiva de la página, sin repetir y sin el nombre actual.
+/// Recoge los sinónimos de la sección "Sinónimos y combinaciones", sin el nombre actual.
 fn extraer_sinonimos(html: &str, nombre_actual: &str) -> Vec<String> {
+    html.match_indices(TITULO_SINONIMOS)
+        .map(|(posicion, _)| {
+            sinonimos_de_seccion(&html[posicion + TITULO_SINONIMOS.len()..], nombre_actual)
+        })
+        .find(|sinonimos| !sinonimos.is_empty())
+        .unwrap_or_default()
+}
+
+/// Lee los nombres en cursiva hasta la siguiente sección y sin pasar del número de resultados que anuncia.
+fn sinonimos_de_seccion(texto: &str, nombre_actual: &str) -> Vec<String> {
+    let fin = SECCIONES_SIGUIENTES
+        .iter()
+        .filter_map(|titulo| texto.find(titulo))
+        .min()
+        .unwrap_or(texto.len());
+    let seccion = &texto[..fin];
+    let limite = numero_de_resultados(seccion).unwrap_or(MAXIMO_SIN_CONTADOR);
     let mut sinonimos: Vec<String> = Vec::new();
-    for nombre in nombres_en_cursiva(html) {
+    for nombre in nombres_en_cursiva(seccion).into_iter().take(limite) {
         if nombre != nombre_actual && !sinonimos.contains(&nombre) {
             sinonimos.push(nombre);
         }
     }
     sinonimos
+}
+
+/// Lee el número que va delante de la palabra "resultados" al principio de la sección.
+fn numero_de_resultados(seccion: &str) -> Option<usize> {
+    let texto = texto_sin_etiquetas(ventana(seccion, 0, 400));
+    let antes = &texto[..texto.find("resultado")?];
+    antes.split_whitespace().next_back()?.parse().ok()
 }
 
 /// Devuelve los nombres en dos palabras que aparecen entre <i> y </i>.
@@ -48,15 +82,16 @@ fn nombres_en_cursiva(texto: &str) -> Vec<String> {
     nombres
 }
 
-/// Devuelve las dos primeras palabras si parecen género y especie.
+/// Devuelve las dos primeras palabras si parecen género (en mayúscula) y especie (en minúscula).
 fn binomio(candidato: &str) -> Option<String> {
     let mut palabras = candidato.split_whitespace();
     let genero = palabras.next()?;
     let especie = palabras.next()?;
     let nombre = format!("{genero} {especie}");
-    let empieza_en_mayuscula = genero.chars().next()?.is_uppercase();
+    let genero_en_mayuscula = genero.chars().next()?.is_uppercase();
+    let especie_en_minuscula = especie.chars().next()?.is_lowercase();
     let solo_letras = nombre.chars().all(|c| c.is_alphabetic() || c.is_whitespace());
-    (empieza_en_mayuscula && solo_letras).then_some(nombre)
+    (genero_en_mayuscula && especie_en_minuscula && solo_letras).then_some(nombre)
 }
 
 /// Recoge los nombres comunes marcados con el idioma "spa" en los datos de la página.
@@ -148,7 +183,72 @@ mod tests {
         assert_eq!(binomio("Neovison vison (Schreber, 1777)"), Some("Neovison vison".to_string()));
         assert_eq!(binomio("neovison vison"), None);
         assert_eq!(binomio("Neovison"), None);
+        assert_eq!(binomio("Neovison Vison"), None);
         assert_eq!(binomio("Neovison v1son"), None);
         assert_eq!(binomio(""), None);
+    }
+
+    fn con_decoys() -> String {
+        concat!(
+            "<section><h2>Clasificación</h2><p><i>Mustela erminea</i></p></section>",
+            "<script>{\"titulo\": \"Sinónimos y combinaciones\"}</script>",
+            "<section><h2>Sinónimos y combinaciones</h2><p><span>3</span> resultados</p><ul>",
+            "<li><i>Mustela vison</i> Schreber, 1777</li>",
+            "<li><i>Neovison vison</i> (Schreber, 1777)</li>",
+            "<li><i>Putorius vison</i> Schreber, 1777</li></ul></section>",
+            "<section><h2>Nombres comunes</h2><p><i>Felis catus</i></p></section>",
+            "<section><h2>Bibliografía</h2><p><i>Canis lupus</i> Linnaeus, 1758</p></section>"
+        )
+        .to_string()
+    }
+
+    #[test]
+    fn los_sinonimos_son_solo_los_de_su_seccion() {
+        let ficha = procesar_gbif(&con_decoys(), "Neogale vison").unwrap();
+        assert_eq!(ficha.nombres_anteriores, vec!["Mustela vison", "Neovison vison", "Putorius vison"]);
+    }
+
+    #[test]
+    fn el_numero_de_resultados_pone_el_limite() {
+        let html = con_decoys().replace("<span>3</span> resultados", "2 resultados");
+        let ficha = procesar_gbif(&html, "Neogale vison").unwrap();
+        assert_eq!(ficha.nombres_anteriores, vec!["Mustela vison", "Neovison vison"]);
+    }
+
+    #[test]
+    fn sin_contador_la_lectura_se_para_en_la_siguiente_seccion() {
+        let html = con_decoys().replace("<p><span>3</span> resultados</p>", "");
+        let ficha = procesar_gbif(&html, "Neogale vison").unwrap();
+        assert_eq!(ficha.nombres_anteriores, vec!["Mustela vison", "Neovison vison", "Putorius vison"]);
+    }
+
+    #[test]
+    fn un_titulo_repetido_sin_nombres_no_tapa_a_la_seccion_buena() {
+        let html = con_decoys();
+        assert_eq!(html.matches("Sinónimos y combinaciones").count(), 2);
+        assert_eq!(procesar_gbif(&html, "Neogale vison").unwrap().nombres_anteriores.len(), 3);
+    }
+
+    #[test]
+    fn sin_la_seccion_de_sinonimos_no_hay_nombres_anteriores_aunque_haya_cursivas() {
+        let html = r#"<i>Mustela vison</i> {"@language": "spa", "@value": "Visón"}"#;
+        let ficha = procesar_gbif(html, "Neogale vison").unwrap();
+        assert!(ficha.nombres_anteriores.is_empty());
+        assert_eq!(ficha.nombres_comunes_espanol, vec!["Visón"]);
+    }
+
+    #[test]
+    fn una_seccion_sin_resultados_da_cero_sinonimos() {
+        let html = r#"<h2>Sinónimos y combinaciones</h2><p>0 resultados</p><h2>Nombres comunes</h2>{"@language": "spa", "@value": "Acocil rojo"}"#;
+        let ficha = procesar_gbif(html, "Procambarus clarkii").unwrap();
+        assert!(ficha.nombres_anteriores.is_empty());
+    }
+
+    #[test]
+    fn el_numero_de_resultados_se_lee_con_o_sin_etiquetas() {
+        assert_eq!(numero_de_resultados("<p>3 resultados</p>"), Some(3));
+        assert_eq!(numero_de_resultados("<b>12</b> resultados"), Some(12));
+        assert_eq!(numero_de_resultados("sin contador"), None);
+        assert_eq!(numero_de_resultados("muchos resultados"), None);
     }
 }

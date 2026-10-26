@@ -46,7 +46,7 @@ fn inaturalist_cangrejo_da_los_datos_de_la_observacion_394426183() {
 #[test]
 fn gbif_vison_da_sinonimos_y_nombre_comun_en_espanol() {
     let ficha = procesar_gbif(GBIF_VISON, "Neogale vison").unwrap();
-    assert!(!ficha.nombres_anteriores.is_empty());
+    assert_eq!(ficha.nombres_anteriores, vec!["Mustela vison", "Neovison vison", "Putorius vison"]);
     assert!(ficha.nombres_comunes_espanol.iter().any(|n| n.contains("Visón")));
 }
 
