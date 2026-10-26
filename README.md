@@ -48,6 +48,8 @@ La planificación relativa al objetivo 1 se encuentra respectivamente en los sig
 - [Historias de usuario](docs/objetivos/objetivo-1/historias-usuarios.md)
 - [Milestones](docs/objetivos/objetivo-1/milestones.md)
 
+La descomposición de la HU001 en issues del objetivo 4, con dónde está cada issue en el código y en los tests, se encuentra [aquí](docs/objetivos/objetivo-4/descomposicion.md).
+
 ### Lenguaje
 El modelo del dominio se implementa en **Rust**. Motivos:
 
@@ -57,7 +59,14 @@ El modelo del dominio se implementa en **Rust**. Motivos:
 - **`enum` con datos** para los valores cerrados del dominio (`Fuente`, `FaseVital`) y *newtypes* (`Latitud`, `Longitud`) para que intercambiar valores del mismo tipo base no compile.
 - **Herramientas oficiales integradas**: rustup para gestionar las versiones.
 
-En el Milestone 0 se usa solo la biblioteca estándar, hasta que haya gestor de dependencias: la fecha de los avistamientos se representa con `std::time::SystemTime` y las URLs de las fotos se validan de forma mínima.
+El proyecto no tiene dependencias externas: todo se hace con la biblioteca estándar. La fecha de los avistamientos se representa con `std::time::SystemTime`, las URLs de las fotos se validan de forma mínima y los procesadores de HTML leen las páginas guardadas con búsquedas de texto, sin analizador de HTML.
+
+### Estructura del código
+
+- `src/dominio/`: el modelo y sus reglas, sin leer ficheros ni usar la red. Catálogo de especies, red de depredación, avistamientos, tramos y ríos, coordenadas y errores del dominio.
+- `src/aplicacion/consulta.rs`: el caso de uso de la HU001 (`consultar_zona`), que junta el catálogo, la red de depredación, los avistamientos y los ríos.
+- `src/aplicacion/procesadores_html/`: lee el HTML guardado de iNaturalist, GBIF, GloBI y GISD y lo convierte en datos del dominio.
+- `tests/`: tests de integración y datos de prueba (ver [Tests](#tests)).
 
 ### Entorno de desarrollo
 La versión de Rust del proyecto está fijada en el fichero [`rust-toolchain.toml`](rust-toolchain.toml), que es la única fuente de verdad para la versión.
@@ -82,6 +91,8 @@ Para cambiar de versión de Rust se modifica la línea `channel` de `rust-toolch
 **Reflexión final:** Cargo es el gestor oficial de Rust. Declara las dependencias en `Cargo.toml` y fija las versiones exactas en `Cargo.lock`. Bazel y Nix resuelven problemas de build a gran escala que este proyecto no tiene, y siguen partiendo del formato de Cargo. Cargo funciona igual con pocas dependencias que con muchas, y en la comunidad Rust no hay debate sobre usarlo. Se elige Cargo.
 
 No requiere instalación adicional: viene con rustup (ver [Entorno de desarrollo](#entorno-de-desarrollo)). Razonamiento ampliado en el issue [#21](https://github.com/marcocugr/BioVigia/issues/21).
+
+**Actualización del objetivo 4:** el producto mínimamente viable no necesita ninguna dependencia directa, porque los datos de las fuentes se leen de páginas HTML guardadas y no de sus APIs. Cargo se sigue usando para fijar la versión del compilador y las dependencias en `Cargo.lock`, que ahora solo contiene el propio paquete.
 
 ### Gestor de tareas
 
@@ -112,15 +123,103 @@ Instalación (una sola vez, ejecutada desde fuera del repositorio):
 ### Comprobación sintaxis de una clase
 La entidad que se comprueba es `CatalogoEspecies`, en [`src/dominio/especie.rs`](src/dominio/especie.rs).
 
-**Qué es:** el catálogo de especies que conoce el sistema. Cada especie se identifica por su nombre científico y guarda su nombre común y si es invasora. También admite nombres científicos anteriores (sinónimos), para que un aviso que use un nombre antiguo se asocie a la especie correcta.
+**Qué es:** el catálogo de especies que conoce el sistema. Cada especie se identifica por su nombre científico y guarda sus nombres comunes en español (puede tener varios) y si es invasora. También admite nombres científicos anteriores (sinónimos), para que un aviso que use un nombre antiguo se asocie a la especie correcta.
 
 **Qué hace:**
-- `registrar` da de alta una especie. Rechaza nombres vacíos y nombres repetidos, incluidos los que chocan con el nombre científico o los nombres anteriores de otra especie.
+- `registrar` da de alta una especie. Rechaza un nombre científico vacío, una lista de nombres comunes vacía o con algún nombre vacío, y nombres científicos repetidos, incluidos los que chocan con el nombre científico o los nombres anteriores de otra especie. Dos especies sí pueden compartir un nombre común.
 - `especie` recibe un nombre (actual o anterior) y devuelve el nombre científico vigente, o un error si la especie es desconocida.
 - `especie_invasora` hace lo mismo, pero solo devuelve la especie si es invasora, en caso contrario devuelve un error.
+- `especies_con_nombre_comun` recibe lo que escribe el pescador (por ejemplo "cangrejo") y devuelve, ordenadas, las especies que tienen ese texto en alguno de sus nombres comunes. Busca por subcadena y no distingue mayúsculas ni tildes. Una búsqueda vacía o un nombre que no corresponde a ninguna especie dan error, para que un nombre mal escrito no parezca una especie sin depredadores.
 
 **Orden check:**
 
     just check
 
-Esta orden ejecuta `cargo check` (mira el [justfile](./justfile)), que comprueba únicamente que el código compila (sintaxis y tipos), incluida esta entidad. Todavía no ejecuta pruebas ni formato ni linter.
+Esta orden ejecuta `cargo check` (mira el [justfile](./justfile)), que comprueba únicamente que el código compila (sintaxis y tipos), incluida esta entidad. No ejecuta pruebas ni formato ni linter: las pruebas se ejecutan con `just test` (ver [Tests](#tests)).
+
+
+## Tests
+
+### Aserciones y test runner
+
+Son dos cosas distintas:
+
+- **Aserciones:** comparan lo obtenido con lo esperado y fallan con un mensaje. En Rust son las macros de la biblioteca estándar `assert!`, `assert_eq!` y `assert_ne!`.
+- **Test runner:** busca los tests, los ejecuta y da el informe. En Rust es `cargo test`, que viene con Cargo.
+
+**Criterios fijados antes de elegir:**
+
+1. Que viene con el lenguaje, para que funcione igual en WSL, en Docker y en la máquina de quien corrija.
+2. Que no escribe en el directorio de los fuentes salvo en el de compilación, y que ese directorio se puede cambiar (lo exige el objetivo 5).
+3. Que el mensaje de un fallo enseña el valor esperado y el obtenido.
+4. Que sirve para tests unitarios y de integración.
+
+**Opciones consideradas:**
+
+| Opción | Qué es | Criterio 1 | Criterio 2 | Criterio 3 |
+|---|---|---|---|---|
+| `cargo test` y las macros `assert*` | Runner y aserciones de la biblioteca estándar | Incluido | Sí, con `CARGO_TARGET_DIR` | Sí, `assert_eq!` enseña izquierda y derecha |
+| `cargo-nextest` | Otro runner | Hay que instalarlo | Sí | Mejor informe, pero no ejecuta doctests |
+| `pretty_assertions` | Aserciones con las diferencias resaltadas | Es una dependencia más | No aplica | Mejora el mensaje |
+| `rstest` | Fixtures y tests con parámetros | Es una dependencia más | No aplica | No aplica |
+
+**Decisión:** `cargo test` y las macros de la biblioteca estándar. Es la única opción que cumple los cuatro criterios sin instalar ni añadir nada, y el proyecto no tiene todavía tantos tests repetitivos como para que `rstest` compense. Si más adelante los mensajes de fallo se quedan cortos, `pretty_assertions` se añadiría como dependencia de desarrollo.
+
+### Organización de los tests
+
+- **Tests unitarios:** dentro de cada fichero de `src/`, en un módulo `tests` con `#[cfg(test)]`. Así pueden probar también las funciones privadas.
+- **Tests de integración:** en `tests/`, usando solo la API pública.
+  - `tests/hu001.rs`: la consulta de zona de la HU001 con los datos leídos de las páginas guardadas, con el camino feliz y con los que no lo son.
+  - `tests/fuentes_reales.rs`: cada procesador de HTML con las páginas guardadas.
+- **Datos de prueba:** las páginas guardadas están en `tests/fixtures/`:
+  - `inaturalist/vison.html` y `inaturalist/cangrejo.html`
+  - `gbif/vison.html` y `gbif/cangrejo.html`
+  - `gisd.html`
+  - `globi.html`
+- **Tests de los procesadores:** además de las páginas reales, cada procesador se prueba con trozos pequeños de HTML escritos en el propio test, para poder probar lo que una página real no trae: HTML cortado, caracteres como la ñ, campos que faltan o decorados que no hay que leer.
+
+### Qué casos se prueban
+
+La HU001 expresa un problema, y la lógica que la resuelve tiene casos que no son el feliz. Los tests de `consultar_zona` y de `hu001.rs` cubren:
+
+- Un depredador con avistamientos recientes en el río (presencia detectada) y el mismo río pasada la ventana (sin registros recientes).
+- El último día de la ventana (cuenta) y el siguiente (no cuenta).
+- Un avistamiento a 200 m del tramo (cuenta) y a 800 m (no cuenta).
+- Otro río sin avistamientos.
+- Un avistamiento de la propia presa, o de una invasora que no la depreda: no salen en el resultado.
+- Varios depredadores, ordenados y sin repetir.
+- Un nombre común que no existe y un río que no existe: dan error, no una lista vacía.
+- Un error de la geometría de un tramo: sale como error y no como "sin registros".
+
+Los errores del dominio tienen cada uno su test y todos tienen mensaje en castellano.
+
+### Principios F.I.R.S.T.
+
+- **Fast:** los tests no usan red ni más disco que las páginas guardadas, que se incluyen al compilar con `include_str!`. Tardan milisegundos.
+- **Independent:** cada test construye sus datos y no depende del resultado ni del orden de otro.
+- **Repeatable:** ningún test lee el reloj (la fecha de referencia se pasa como parámetro), usa la red o depende del orden de un `HashMap`: los resultados se devuelven ordenados.
+- **Self-validating:** cada test pasa o falla con una aserción, sin mirar ninguna salida.
+- **Timely:** los criterios de aceptación de cada issue están escritos como lista de comprobación y cada uno tiene su test. En este objetivo parte de los tests se añadieron después del código, en commits propios que enlazan el issue.
+
+### Ejecución de los tests
+
+Todos, desde cero:
+
+    just test
+
+Viendo lo que imprimen los tests (por ejemplo, el resultado de la consulta en `hu001`):
+
+    cargo test -- --nocapture
+
+Con otro directorio de compilación, sin tocar `Cargo.lock`, como pide el objetivo 5:
+
+    CARGO_TARGET_DIR=/tmp/biovigia-build cargo test --locked
+
+Solo un fichero o un test:
+
+    cargo test --test hu001
+    cargo test es_reciente
+
+### Configuración
+
+La clave `test` de `iv.yaml` apunta a `tests/hu001.rs`, que prueba la historia de usuario completa con casos felices y no felices.

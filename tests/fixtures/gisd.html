@@ -1,0 +1,235 @@
+<style>
+.pagination {list-style: none; margin:0; padding:0; width:100%; display: block; margin-top: 20px;}
+.pagination::after {display: block; width:100%; clear: both; content:"\00a0";}
+.pagination li {margin:0; padding:0;}
+.pagination li a, .pagination li span {
+    background: url("./css/images/page.png") no-repeat scroll 0 0 transparent;
+    height: 34px;
+    width: 21px;
+		color: #666666;
+float: left;
+font-size: 12px;
+font-weight: 700;
+
+padding-left: 7px;
+padding-top: 11px;
+display: block;
+padding-right: 7px;
+text-align: center;
+}
+.pagination .active a {
+	color:#9CC2D9;
+}
+
+</style>
+
+<!DOCTYPE html>
+<html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>GISD</title>
+    <meta name="keywords" content="keywords">
+    <meta name="description" content="description">
+    <meta name="author" content="Upane - www.upane.it">
+    <link type="text/css" href="https://www.iucngisd.org/gisd/css/gisd.css?c=40e14d8427bbaff333bc809e15bbd5a2f088f9a7" rel="stylesheet">
+    <link type="text/css" href="https://www.iucngisd.org/gisd/lib/dynatree/skin-vista/ui.dynatree.css" rel="stylesheet">
+    <link type="text/css" href="https://www.iucngisd.org/gisd/lib/jquery/css/ui-lightness/jquery-ui-1.9.2.custom.css" rel="stylesheet">
+    <link type="text/css" href="https://www.iucngisd.org/gisd/lib/lightbox/css/lightbox.css" rel="stylesheet">
+    <!--[if IE]>
+    <link type='text/css' href='https://www.iucngisd.org/gisd/css/ie.css' rel='stylesheet'>    
+    <![endif]-->    
+    <!--[if IE 7]>
+    <link type='text/css' href='https://www.iucngisd.org/gisd/css/ie7.css' rel='stylesheet'>    
+    <![endif]-->    
+    <!--[if IE 8]>
+    <link type='text/css' href='https://www.iucngisd.org/gisd/css/ie8.css' rel='stylesheet'>    
+    <![endif]-->    
+	<link rel="shortcut icon" type="image/vnd.microsoft.icon" href="https://www.iucngisd.org/gisd/css/images/favicon.ico">
+    <link rel="icon" type="image/vnd.microsoft.icon" href="https://www.iucngisd.org/gisd/css/images/favicon.ico">
+	<script type="text/javascript" src="https://www.iucngisd.org/gisd/lib/jquery/js/jquery-1.10.1.min.js"></script>
+	<script type="text/javascript" src="https://www.iucngisd.org/gisd/lib/jquery/js/jquery-ui-1.9.2.custom.min.js"></script>
+	<script type="text/javascript" src="https://www.iucngisd.org/gisd/lib/dynatree/jquery.dynatree.js"></script>
+	<script type="text/javascript" src="https://www.iucngisd.org/gisd/lib/pajinate/jquery.pajinate.min.js"></script>
+	<script type="text/javascript" src="https://www.iucngisd.org/gisd/lib/als/jquery.als-1.3.min.js"></script>
+	<script type="text/javascript" src="https://www.iucngisd.org/gisd/lib/lightbox/js/lightbox-2.6.min.js"></script>
+		<script type="text/javascript" src="https://www.iucngisd.org/gisd/lib/js/document.ready.js?c=40e14d8427bbaff333bc809e15bbd5a2f088f9a7"></script>
+	
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css" />
+	<script src="https://cdn.jsdelivr.net/gh/fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+	
+	<script type="text/javascript">
+
+$(document).ready(function(){  
+
+
+	var items = 10;
+
+	$('#paging_container').pajinate({
+		nav_label_first : ' First ',
+		nav_label_last : ' Last ',
+		nav_label_prev : ' Prev ',
+		nav_label_next : ' Next ',
+		num_page_links_to_display : 5,
+		items_per_page : items
+	});
+
+
+	$("div.link.f-left").click(function() {
+		var id = $(this).attr("id");
+		window.location.replace("https://www.iucngisd.org/gisd/"+id+".php");
+	});
+
+});
+
+</script></head>
+<body>	<section>
+		<header>
+	<div class="content">
+		<div id="logo" class="f-left">
+			<a href="https://www.iucngisd.org/gisd/"><img border="0" src="https://www.iucngisd.org/gisd/css/images/logo.png" alt="GISD" height="88" width="95"></a>
+		</div>
+		<div id="title-menu" class="f-left">
+			<div id="title" class="f-left">
+				<p>Global invasive species database</p>
+			</div>
+			<div id="menu" class="f-left">
+				<nav>
+					<ul>
+						<li>
+							<a href="https://www.iucngisd.org/gisd/">Home</a>
+						</li>
+						<li>
+							<a href="https://www.iucngisd.org/gisd/about.php">About the GISD</a>
+						</li>
+						<li>
+							<a href="https://www.iucngisd.org/gisd/about_eicat.php">About EICAT</a>
+						</li>
+						<li>
+							<a href="https://www.iucngisd.org/gisd/howto.php">How to use</a>
+						</li>
+						<li>
+							<a href="https://www.iucngisd.org/gisd/contacts.php">Contacts</a>
+						</li>
+					</ul>
+				</nav>				
+			</div>
+						<div id="worst" class="link f-right"><a href="https://www.iucngisd.org/gisd/100_worst.php">100 of<br>the worst</a></div>
+			<div id="aichi" class="link f-right"><a href="http://www.cbd.int/sp/targets/rationale/target-9/default.shtml" target="_blank"><img src="https://www.iucngisd.org/gisd/css/images/aichi.png" height="40" width="40" alt="AICHI"></a></div>			
+		</div>
+	</div>
+</header>		<div id="box-content" class="content radius-10">
+			<div id="inner-content">
+				<div id="paging_container" class="container">
+					<div id="info-count">The query resulted in <strong>1</strong> species in <strong>1</strong> page</div>
+					<div id="search_advanced_criteria" class="f-right">
+						<div id="criteria_top" class="f-right">your search criteria</div>
+						<div id="criteria_mid" class="f-right">
+								<div id="criteria-tax" class="criteria" style="display: none;">
+									<div class="criteria-title">Selected Taxonomy</div>										
+									<div id="criteria-tax-value" class="criteria-value"></div>
+								</div>
+								<div id="criteria-sys" class="criteria" style="display: none;">
+									<div class="criteria-title">Selected System</div>										
+									<div id="criteria-sys-value" class="criteria-value"></div>
+								</div>
+								<div id="criteria-path" class="criteria" style="display: none;">
+									<div class="criteria-title">Selected Pathway</div>										
+									<div id="criteria-path-value" class="criteria-value"></div>
+								</div>
+								<div id="criteria-thr" class="criteria" style="display: none;">
+									<div class="criteria-title">Selected Threatened</div>										
+									<div id="criteria-thr-value" class="criteria-value"></div>
+								</div>
+								<div id="criteria-loc" class="criteria" style="display: none;">
+									<div class="criteria-title">Selected Location</div>										
+									<div id="criteria-loc1-value" class="criteria-value"></div>
+									<div id="criteria-loc2-value" class="criteria-value"></div>
+									<div id="criteria-loc3-value" class="criteria-value"></div>
+									<div id="criteria-loc4-value" class="criteria-value"></div>
+								</div>
+								<div id="criteria-imp" class="criteria" style="display: none;">
+									<div class="criteria-title">Selected Impact</div>										
+									<div id="criteria-imp-value" class="criteria-value"></div>
+								</div>
+								<div id="criteria-man" class="criteria" style="display: none;">
+									<div class="criteria-title">Selected Management</div>										
+									<div id="criteria-man-value" class="criteria-value"></div>
+								</div>
+								<div id="criteria-eic" class="criteria" style="display: none;">
+									<div class="criteria-title">Selected EICAT Cat.</div>										
+									<div id="criteria-eic-value" class="criteria-value"></div>
+								</div>
+							</div>
+						<div>
+							<form action="index.php" method="POST">
+								<input type="hidden" name="advanced" value="0">
+								<input type="hidden" name="species_name" value="Mustela vison">
+								<input type="hidden" name="taxo-nodes" value="">
+								<input type="hidden" name="imp-nodes" value="">
+								<input type="hidden" name="loc-gr-nodes" value="">
+								<input type="hidden" name="loc-mcf-nodes" value="">
+								<input type="hidden" name="loc-op-nodes" value="">
+								<input type="hidden" name="loc-os-nodes" value="">
+								<input type="hidden" name="man-nodes" value="">
+								<input type="hidden" name="path-nodes" value="">
+								<input type="hidden" name="spe-nodes" value="">
+								<input type="hidden" name="sys-nodes" value="">
+																<input type="hidden" name="eic-nodes" value="">
+								<input type="submit" id="modify" value="modify your criteria">
+							</form>
+						</div>
+						<div id="criteria_bot" class="f-right criteria_bot_search">clear all criteria</div>
+																		<div id="fa-ext-pdf"><a href="#">Download Results (XLSX)</a></div>
+					</div>
+					<div class="page_navigation "></div>
+					<ul class="content spec">
+												<li>
+								<div class="spec-card">
+									<div class="spec">
+										                      <a href="https://www.iucngisd.org/gisd/speciesname/Neovison+vison">Neovison vison</a>
+					  					  (American mink, mink)
+
+									</div>
+									<div class="taxo">
+										<div class="card-tl">Kingdom</div>
+										<div>Phylum</div>
+										<div>Class</div>
+										<div>Order</div>
+										<div class="card-tr">Family</div>
+									</div>
+									<div class="taxo-det">
+										<div class="card-ml">Animalia</div>
+										<div>Chordata</div>
+										<div>Mammalia</div>
+										<div>Carnivora</div>
+										<div>Mustelidae</div>
+									</div>
+									<div class="system">
+										<strong>System:</strong> Terrestrial									</div>
+								</div>
+							</li>
+										</ul>
+					<input id="species_codes" type="hidden" value="969">
+					<div class="page_navigation "></div>
+					<div id="citation" class="f-left">
+						<strong>Recommended citation</strong><br>
+						Global Invasive Species Database (2026). Downloaded from http://www.iucngisd.org/gisd/search.php on 22-10-2026.
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+<div id="red-border" class="f-left"></div>
+<footer>
+	<div class="content">		
+		<div id="logos" class="f-left">
+						<a href="http://www.iucn.org/"><img border="0" src="https://www.iucngisd.org/gisd/css/images/logo-ISSG-monoblocco.png" alt="IUCN"></a>
+			<a href="http://www.isprambiente.gov.it/en?set_language=en"><img border="0" src="https://www.iucngisd.org/gisd/css/images/logo-ispra-2024.png" alt="ISPRA SNPA"></a>
+		</div>
+		<div id="disclaimer" class="f-left">			
+			<p>The Global Invasive Species Database was developed and is managed by the <a href="http://www.issg.org/" target="_blank">Invasive Species Specialist Group (ISSG)</a> of the <a href="http://www.iucn.org/about/work/programmes/species/who_we_are/about_the_species_survival_commission_/" target="_blank">Species Survival Commission (SSC)</a> of the <a href="http://www.iucn.org/" target="_blank">International Union for Conservation of Nature (IUCN)</a>. It was developed as part of the global initiative on invasive species led by the erstwhile Global Invasive Species Programme (GISP) in 2000. The GISD over the past two years and has been redesigned with support from the Abu Dhabi Environment Agency, the Italian Ministry of Environment and ISPRA - the Institute for Environmental Protection and Research, Italy. <a href="https://www.iucngisd.org/gisd/legal.php">TERMS AND CONDITIONS OF USE</a></p>
+					</div>
+	</div>
+</footer>
+</body>
+</html>
