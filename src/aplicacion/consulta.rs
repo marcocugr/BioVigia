@@ -7,51 +7,63 @@ use crate::dominio::especie::CatalogoEspecies;
 use crate::dominio::tramo::Rios;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PeticionZona {
+    pub nombre_comun: String,
+    pub nombre_rio: String,
+    pub dias: u64,
+    pub fecha_referencia: SystemTime,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct FuentesDeVerdad<'a> {
+    pub catalogo: &'a CatalogoEspecies,
+    pub red_depredacion: &'a RedDepredacion,
+    pub registro_avistamientos: &'a RegistroAvistamientos,
+    pub rios: &'a Rios,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ResultadoDepredador {
     pub nombre_cientifico: String,
     pub cantidad_avistamientos: usize,
     pub presencia: PresenciaDepredador,
 }
 
+/// Dice, por cada depredador invasor del nombre común, cuántos avistamientos recientes tiene en el río.
 pub fn consultar_zona(
-    nombre_comun_presa: &str,
-    nombre_rio: &str,
-    dias: u64,
-    fecha_referencia: SystemTime,
-    catalogo: &CatalogoEspecies,
-    red: &RedDepredacion,
-    registro: &RegistroAvistamientos,
-    rios: &Rios,
+    peticion: &PeticionZona,
+    fuentes: &FuentesDeVerdad,
 ) -> Result<Vec<ResultadoDepredador>, ErrorDominio> {
-    let _presas = catalogo.especies_con_nombre_comun(nombre_comun_presa)?;
+    let depredadores = fuentes
+        .red_depredacion
+        .depredadores_de_nombre_comun(fuentes.catalogo, &peticion.nombre_comun)?;
+    fuentes.rios.tramos_de_rio(&peticion.nombre_rio)?;
+    depredadores
+        .into_iter()
+        .map(|nombre| resumir_depredador(nombre, peticion, fuentes))
+        .collect()
+}
 
-    let depredadores = red.depredadores_de_nombre_comun(catalogo, nombre_comun_presa)?;
-
-    let _tramos = rios.tramos_de_rio(nombre_rio)?;
-
-    let mut resultados: Vec<ResultadoDepredador> = depredadores
-        .iter()
-        .map(|nombre_cientifico| {
-            let avistamientos_filtrados: Vec<_> = registro
-                .avistamientos_de_especie(nombre_cientifico)
-                .iter()
-                .filter(|a| a.es_reciente(fecha_referencia, dias))
-                .filter(|a| a.pertenece_a_rio(rios, nombre_rio).unwrap_or(false))
-                .map(|a| (*a).clone())
-                .collect();
-
-            let cantidad = avistamientos_filtrados.len();
-            let presencia = PresenciaDepredador::desde_avistamientos(&avistamientos_filtrados);
-
-            ResultadoDepredador {
-                nombre_cientifico: nombre_cientifico.to_string(),
-                cantidad_avistamientos: cantidad,
-                presencia,
-            }
-        })
-        .collect();
-
-    resultados.sort_by(|a, b| a.nombre_cientifico.cmp(&b.nombre_cientifico));
-
-    Ok(resultados)
+/// Cuenta los avistamientos recientes del depredador en el río de la petición.
+fn resumir_depredador(
+    nombre_cientifico: &str,
+    peticion: &PeticionZona,
+    fuentes: &FuentesDeVerdad,
+) -> Result<ResultadoDepredador, ErrorDominio> {
+    let mut cantidad = 0;
+    for avistamiento in fuentes
+        .registro_avistamientos
+        .avistamientos_de_especie(nombre_cientifico)
+    {
+        if avistamiento.es_reciente(peticion.fecha_referencia, peticion.dias)
+            && avistamiento.pertenece_a_rio(fuentes.rios, &peticion.nombre_rio)?
+        {
+            cantidad += 1;
+        }
+    }
+    Ok(ResultadoDepredador {
+        nombre_cientifico: nombre_cientifico.to_owned(),
+        cantidad_avistamientos: cantidad,
+        presencia: PresenciaDepredador::desde_cantidad(cantidad),
+    })
 }

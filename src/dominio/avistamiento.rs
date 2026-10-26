@@ -146,8 +146,9 @@ pub enum PresenciaDepredador {
 }
 
 impl PresenciaDepredador {
-    pub fn desde_avistamientos(avistamientos: &[Avistamiento]) -> Self {
-        match avistamientos.len() {
+    /// Convierte un número de avistamientos en su estado de presencia.
+    pub fn desde_cantidad(cantidad: usize) -> Self {
+        match cantidad {
             0 => Self::SinRegistrosRecientes,
             n => Self::PresenciaDetectada { cantidad: n },
         }

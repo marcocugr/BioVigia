@@ -10,6 +10,7 @@
 
 mod procesadores_html;
 
+use biovigia::aplicacion::consulta::{consultar_zona, FuentesDeVerdad, PeticionZona};
 use biovigia::dominio::avistamiento::{Avistamiento, EvidenciaFotografica, Fuente, GradoCalidad, RegistroAvistamientos};
 use biovigia::dominio::coordenadas::{Coordenadas, Latitud, Longitud};
 use biovigia::dominio::depredacion::{Depredacion, FaseVital, RedDepredacion};
@@ -181,21 +182,24 @@ fn hu001_pescador_consulta_especie_invasora_en_rio() {
     let fecha_consulta = fecha_base + Duration::from_secs(5 * 86400);
     
     // Ventana temporal: 15 días (como especifica HU001)
-    let dias_ventana = 15;
+    let dias_ventana: u64 = 15;
     
     // Nombre común a buscar (el pescador busca "cangrejo")
     let nombre_comun_presa = "cangrejo";
     
-    let resultado = biovigia::aplicacion::consulta::consultar_zona(
-        nombre_comun_presa,
-        nombre_rio_usuario,  // Usar el nombre proporcionado por el pescador
-        dias_ventana,
-        fecha_consulta,
-        &catalogo,
-        &red,
-        &registro,
-        &rios,
-    );
+    let peticion = PeticionZona {
+        nombre_comun: nombre_comun_presa.to_string(),
+        nombre_rio: nombre_rio_usuario.to_string(),
+        dias: dias_ventana,
+        fecha_referencia: fecha_consulta,
+    };
+    let fuentes = FuentesDeVerdad {
+        catalogo: &catalogo,
+        red_depredacion: &red,
+        registro_avistamientos: &registro,
+        rios: &rios,
+    };
+    let resultado = consultar_zona(&peticion, &fuentes);
     
     // === VERIFICACIONES ===
     
