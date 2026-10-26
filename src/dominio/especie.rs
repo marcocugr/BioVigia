@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::dominio::error::ErrorDominio;
-use crate::dominio::texto::normalizar;
+use crate::utils::texto::normalizar;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 struct Especie {

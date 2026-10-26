@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 use crate::dominio::coordenadas::Coordenadas;
 use crate::dominio::error::ErrorDominio;
-use crate::dominio::texto::normalizar;
+use crate::utils::texto::normalizar;
 
 pub const RADIO_ALREDEDORES_METROS: f64 = 500.0;
 const METROS_POR_GRADO: f64 = 111_194.93;
