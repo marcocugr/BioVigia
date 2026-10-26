@@ -131,8 +131,6 @@ La entidad que se comprueba es `CatalogoEspecies`, en [`src/dominio/especie.rs`]
 - `especie_invasora` hace lo mismo, pero solo devuelve la especie si es invasora, en caso contrario devuelve un error.
 - `especies_con_nombre_comun` recibe lo que escribe el pescador (por ejemplo "cangrejo") y devuelve, ordenadas, las especies que tienen ese texto en alguno de sus nombres comunes. Busca por subcadena y no distingue mayúsculas ni tildes. Una búsqueda vacía o un nombre que no corresponde a ninguna especie dan error, para que un nombre mal escrito no parezca una especie sin depredadores.
 
-**Uso en el servicio:** BioVigía solo debe aceptar avistamientos y depredaciones de especies que existan en el catálogo y que sean invasoras. El catálogo es la fuente de la verdad de esa validación, de modo que un aviso con una especie desconocida o no invasora se rechaza antes de entrar en el sistema. También es quien traduce el nombre con el que busca el pescador a las especies concretas.
-
 **Orden check:**
 
     just check
