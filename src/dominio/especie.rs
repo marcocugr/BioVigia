@@ -107,7 +107,6 @@ impl CatalogoEspecies {
     }
 }
 
-/// Recorta los nombres comunes y falla si no hay ninguno o si alguno queda vacío.
 fn nombres_comunes_validos(nombres: Vec<String>) -> Result<HashSet<String>, ErrorDominio> {
     let recortados: Vec<String> = nombres.iter().map(|n| n.trim().to_owned()).collect();
     if recortados.is_empty() || recortados.iter().any(String::is_empty) {

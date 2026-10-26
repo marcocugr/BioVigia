@@ -91,7 +91,6 @@ impl RedDepredacion {
         Ok(())
     }
 
-    /// Devuelve, sin repetir y ordenados, los depredadores de las especies que tienen ese nombre común.
     pub fn depredadores_de_nombre_comun(
         &self,
         catalogo: &CatalogoEspecies,

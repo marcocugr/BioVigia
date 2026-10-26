@@ -1,4 +1,3 @@
-/// Recorta, pasa a minúsculas y quita las tildes de las vocales, dejando la ñ como está.
 pub(crate) fn normalizar(texto: &str) -> String {
     texto
         .trim()
@@ -8,7 +7,6 @@ pub(crate) fn normalizar(texto: &str) -> String {
         .collect()
 }
 
-/// Devuelve la vocal sin tilde ni diéresis, y cualquier otra letra sin cambios.
 fn quitar_tilde(letra: char) -> char {
     match letra {
         'á' | 'à' | 'ä' | 'â' => 'a',

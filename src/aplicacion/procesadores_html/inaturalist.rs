@@ -20,7 +20,6 @@ pub struct ObservacionINaturalist {
 }
 
 impl ObservacionINaturalist {
-    /// Convierte la observación en un avistamiento del dominio, validado contra el catálogo.
     pub fn a_avistamiento(&self, catalogo: &CatalogoEspecies) -> Result<Avistamiento, ErrorFuente> {
         let coordenadas = Coordenadas::new(Latitud::new(self.latitud)?, Longitud::new(self.longitud)?);
         let evidencia = EvidenciaFotografica::new(self.autor.clone(), self.urls_fotos.clone())?;
@@ -37,7 +36,6 @@ impl ObservacionINaturalist {
     }
 }
 
-/// Extrae los datos de una observación del HTML guardado de su página en iNaturalist.
 pub fn procesar_inaturalist(html: &str) -> Result<ObservacionINaturalist, ErrorFuente> {
     let id_observacion = extraer_id_observacion(html)
         .ok_or(ErrorFuente::CampoNoEncontrado("el identificador de la observación"))?;
@@ -57,7 +55,6 @@ pub fn procesar_inaturalist(html: &str) -> Result<ObservacionINaturalist, ErrorF
     })
 }
 
-/// Lee el identificador numérico que la página guarda en INITIAL_OBSERVATION_ID.
 fn extraer_id_observacion(html: &str) -> Option<String> {
     const MARCA: &str = "INITIAL_OBSERVATION_ID = \"";
     let inicio = html.find(MARCA)? + MARCA.len();
@@ -66,7 +63,6 @@ fn extraer_id_observacion(html: &str) -> Option<String> {
     (!id.is_empty() && id.chars().all(|c| c.is_ascii_digit())).then(|| id.to_owned())
 }
 
-/// Lee el nombre científico, que va entre paréntesis en el título de la página.
 fn extraer_nombre_cientifico(html: &str) -> Option<String> {
     let inicio_etiqueta = html.find("<title")?;
     let inicio_titulo = inicio_etiqueta + html[inicio_etiqueta..].find('>')? + 1;
@@ -78,7 +74,6 @@ fn extraer_nombre_cientifico(html: &str) -> Option<String> {
     (!nombre.is_empty()).then(|| nombre.to_owned())
 }
 
-/// Lee la fecha de DCTERMS.issued y la pasa a las 00:00 UTC de ese día.
 fn extraer_fecha(html: &str) -> Result<SystemTime, ErrorFuente> {
     let fecha = contenidos_de_etiquetas(html, "name", "DCTERMS.issued")
         .into_iter()
@@ -87,7 +82,6 @@ fn extraer_fecha(html: &str) -> Result<SystemTime, ErrorFuente> {
     parsear_fecha(&fecha).ok_or(ErrorFuente::ValorInvalido("la fecha"))
 }
 
-/// Convierte un texto que empieza por AAAA-MM-DD en las 00:00 UTC de ese día.
 fn parsear_fecha(texto: &str) -> Option<SystemTime> {
     let mut partes = texto.trim().get(..10)?.split('-');
     let anio: i64 = partes.next()?.parse().ok()?;
@@ -100,7 +94,6 @@ fn parsear_fecha(texto: &str) -> Option<SystemTime> {
     Some(SystemTime::UNIX_EPOCH + Duration::from_secs(dias * 86_400))
 }
 
-/// Dice cuántos días tiene el mes, contando los años bisiestos.
 fn dias_del_mes(anio: i64, mes: i64) -> i64 {
     match mes {
         2 if anio % 4 == 0 && (anio % 100 != 0 || anio % 400 == 0) => 29,
@@ -110,7 +103,6 @@ fn dias_del_mes(anio: i64, mes: i64) -> i64 {
     }
 }
 
-/// Cuenta los días desde el 1 de enero de 1970 hasta la fecha, con el algoritmo de días civiles.
 fn dias_desde_1970(anio: i64, mes: i64, dia: i64) -> i64 {
     let anio = if mes <= 2 { anio - 1 } else { anio };
     let era = anio.div_euclid(400);
@@ -120,18 +112,15 @@ fn dias_desde_1970(anio: i64, mes: i64, dia: i64) -> i64 {
     era * 146_097 + dia_de_era - 719_468
 }
 
-/// Busca las coordenadas en un enlace de mapa y, si no, en los atributos data-lat y data-lng.
 fn extraer_coordenadas(html: &str) -> Option<(f64, f64)> {
     coordenadas_de_enlace_de_mapa(html).or_else(|| coordenadas_de_atributos(html))
 }
 
-/// Lee latitud y longitud del primer enlace con la forma /@latitud,longitud que las tenga.
 fn coordenadas_de_enlace_de_mapa(html: &str) -> Option<(f64, f64)> {
     html.match_indices("/@")
         .find_map(|(posicion, _)| par_de_coordenadas(ventana(html, posicion + 2, 48)))
 }
 
-/// Lee dos números separados por coma si son una latitud y una longitud posibles.
 fn par_de_coordenadas(texto: &str) -> Option<(f64, f64)> {
     let mut partes = texto.split(',');
     let latitud = numero_al_principio(partes.next()?)?;
@@ -139,7 +128,6 @@ fn par_de_coordenadas(texto: &str) -> Option<(f64, f64)> {
     (latitud.abs() <= 90.0 && longitud.abs() <= 180.0).then_some((latitud, longitud))
 }
 
-/// Lee el número decimal con el que empieza el texto.
 fn numero_al_principio(texto: &str) -> Option<f64> {
     let fin = texto
         .find(|c: char| !(c.is_ascii_digit() || matches!(c, '.' | '-' | '+')))
@@ -147,14 +135,12 @@ fn numero_al_principio(texto: &str) -> Option<f64> {
     texto[..fin].parse().ok()
 }
 
-/// Lee latitud y longitud de los atributos data-lat y data-lng (o data-lon).
 fn coordenadas_de_atributos(html: &str) -> Option<(f64, f64)> {
     let latitud = numero_de_atributo(html, "data-lat")?;
     let longitud = numero_de_atributo(html, "data-lng").or_else(|| numero_de_atributo(html, "data-lon"))?;
     Some((latitud, longitud))
 }
 
-/// Lee el número que un atributo guarda entre comillas.
 fn numero_de_atributo(html: &str, atributo: &str) -> Option<f64> {
     let marca = format!("{atributo}=\"");
     let inicio = html.find(&marca)? + marca.len();
@@ -162,7 +148,6 @@ fn numero_de_atributo(html: &str, atributo: &str) -> Option<f64> {
     valor[..valor.find('"')?].trim().parse().ok()
 }
 
-/// Lee la calidad del texto que sigue a "quality_grade", sin contar los enlaces de filtro.
 fn extraer_calidad(html: &str) -> Option<GradoCalidad> {
     const MARCA: &str = "quality_grade";
     html.match_indices(MARCA)
@@ -172,7 +157,6 @@ fn extraer_calidad(html: &str) -> Option<GradoCalidad> {
         .find_map(|(posicion, _)| grado_en(ventana(html, posicion + MARCA.len(), 24)))
 }
 
-/// Reconoce el grado de calidad que aparece primero en el texto.
 fn grado_en(texto: &str) -> Option<GradoCalidad> {
     let texto = texto.to_ascii_lowercase();
     [
@@ -188,7 +172,6 @@ fn grado_en(texto: &str) -> Option<GradoCalidad> {
     .map(|(_, grado)| grado)
 }
 
-/// Lee el nombre del observador de la etiqueta DC.creator.
 fn extraer_autor(html: &str) -> Option<String> {
     contenidos_de_etiquetas(html, "name", "DC.creator")
         .into_iter()
@@ -196,7 +179,6 @@ fn extraer_autor(html: &str) -> Option<String> {
         .find(|autor| !autor.is_empty())
 }
 
-/// Recoge las URL de todas las etiquetas og:image, sin repetir y solo las http o https.
 fn extraer_urls_fotos(html: &str) -> Vec<String> {
     let mut urls: Vec<String> = Vec::new();
     for url in contenidos_de_etiquetas(html, "property", "og:image") {

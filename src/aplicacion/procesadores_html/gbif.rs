@@ -17,7 +17,6 @@ pub struct FichaGbif {
     pub nombres_comunes_espanol: Vec<String>,
 }
 
-/// Extrae de una ficha de GBIF los nombres científicos anteriores y los nombres comunes en español.
 pub fn procesar_gbif(html: &str, nombre_actual: &str) -> Result<FichaGbif, ErrorFuente> {
     let nombres_anteriores = extraer_sinonimos(html, nombre_actual);
     let nombres_comunes_espanol = extraer_nombres_comunes_espanol(html);
@@ -30,7 +29,6 @@ pub fn procesar_gbif(html: &str, nombre_actual: &str) -> Result<FichaGbif, Error
     })
 }
 
-/// Recoge los sinónimos de la sección "Sinónimos y combinaciones", sin el nombre actual.
 fn extraer_sinonimos(html: &str, nombre_actual: &str) -> Vec<String> {
     html.match_indices(TITULO_SINONIMOS)
         .map(|(posicion, _)| {
@@ -40,7 +38,6 @@ fn extraer_sinonimos(html: &str, nombre_actual: &str) -> Vec<String> {
         .unwrap_or_default()
 }
 
-/// Lee los nombres en cursiva hasta la siguiente sección y sin pasar del número de resultados que anuncia.
 fn sinonimos_de_seccion(texto: &str, nombre_actual: &str) -> Vec<String> {
     let fin = SECCIONES_SIGUIENTES
         .iter()
@@ -58,14 +55,12 @@ fn sinonimos_de_seccion(texto: &str, nombre_actual: &str) -> Vec<String> {
     sinonimos
 }
 
-/// Lee el número que va delante de la palabra "resultados" al principio de la sección.
 fn numero_de_resultados(seccion: &str) -> Option<usize> {
     let texto = texto_sin_etiquetas(ventana(seccion, 0, 400));
     let antes = &texto[..texto.find("resultado")?];
     antes.split_whitespace().next_back()?.parse().ok()
 }
 
-/// Devuelve los nombres en dos palabras que aparecen entre <i> y </i>.
 fn nombres_en_cursiva(texto: &str) -> Vec<String> {
     let mut nombres = Vec::new();
     let mut desde = 0;
@@ -82,7 +77,6 @@ fn nombres_en_cursiva(texto: &str) -> Vec<String> {
     nombres
 }
 
-/// Devuelve las dos primeras palabras si parecen género (en mayúscula) y especie (en minúscula).
 fn binomio(candidato: &str) -> Option<String> {
     let mut palabras = candidato.split_whitespace();
     let genero = palabras.next()?;
@@ -94,7 +88,6 @@ fn binomio(candidato: &str) -> Option<String> {
     (genero_en_mayuscula && especie_en_minuscula && solo_letras).then_some(nombre)
 }
 
-/// Recoge los nombres comunes marcados con el idioma "spa" en los datos de la página.
 fn extraer_nombres_comunes_espanol(html: &str) -> Vec<String> {
     const IDIOMA: &str = r#""@language": "spa""#;
     const VALOR: &str = r#""@value": ""#;

@@ -29,7 +29,6 @@ impl LineaTramo {
         Ok(Self { puntos })
     }
 
-    /// Mide en metros la distancia del punto a la línea que forman los puntos del tramo.
     pub fn distancia_metros(&self, punto: &Coordenadas) -> f64 {
         self.puntos
             .windows(2)
@@ -51,7 +50,6 @@ impl GeometriaTramo for LineaTramo {
     }
 }
 
-/// Mide la distancia del punto al segmento sobre un plano local centrado en el punto.
 fn distancia_a_segmento(punto: &Coordenadas, a: &Coordenadas, b: &Coordenadas) -> f64 {
     let escala_longitud = punto.latitud().grados().to_radians().cos();
     let a = en_metros(punto, a, escala_longitud);
@@ -66,7 +64,6 @@ fn distancia_a_segmento(punto: &Coordenadas, a: &Coordenadas, b: &Coordenadas) -
     (a.0 + t * dx).hypot(a.1 + t * dy)
 }
 
-/// Pasa un punto a metros (este y norte) respecto al origen, escalando la longitud por la latitud.
 fn en_metros(origen: &Coordenadas, otro: &Coordenadas, escala_longitud: f64) -> (f64, f64) {
     let este = (otro.longitud().grados() - origen.longitud().grados()) * escala_longitud;
     let norte = otro.latitud().grados() - origen.latitud().grados();

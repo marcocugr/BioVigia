@@ -16,14 +16,12 @@ pub struct RelacionDepredacion {
 }
 
 impl RelacionDepredacion {
-    /// Crea la depredación del dominio. GloBI no da la fase vital, así que se asumen todas.
     pub fn a_depredacion(&self, catalogo: &CatalogoEspecies) -> Result<Depredacion, ErrorFuente> {
         let fases: BTreeSet<FaseVital> = FaseVital::TODAS.iter().copied().collect();
         Ok(Depredacion::new(catalogo, &self.depredador, &self.presa, fases, None)?)
     }
 }
 
-/// Extrae las presas que GloBI dice que come el depredador, sin repetir, o solo la presa del filtro.
 pub fn procesar_globi(
     html: &str,
     nombre_depredador: &str,
@@ -48,14 +46,12 @@ pub fn procesar_globi(
     relaciones
 }
 
-/// Parte el HTML en un trozo por cada interacción de la lista de resultados.
 fn bloques(html: &str) -> Vec<&str> {
     let mut inicios: Vec<usize> = html.match_indices(BLOQUE).map(|(posicion, _)| posicion).collect();
     inicios.push(html.len());
     inicios.windows(2).map(|par| &html[par[0]..par[1]]).collect()
 }
 
-/// Devuelve los valores de data-taxon-name que no están vacíos, en orden.
 fn nombres_de_taxon(bloque: &str) -> Vec<String> {
     let mut nombres = Vec::new();
     let mut resto = bloque;

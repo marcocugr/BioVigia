@@ -2,7 +2,6 @@ use super::html::{texto_sin_etiquetas, ventana};
 
 const RECUENTO: &str = "The query resulted in";
 
-/// Dice si GISD devuelve la especie con alguno de sus nombres, lo que la marca como invasora.
 pub fn procesar_gisd(html: &str, nombres_cientificos: &[&str]) -> bool {
     let Some(inicio) = html.find(RECUENTO) else {
         return false;
@@ -17,7 +16,6 @@ pub fn procesar_gisd(html: &str, nombres_cientificos: &[&str]) -> bool {
     }
 }
 
-/// Lee el número de especies que anuncia el recuento, con o sin etiquetas alrededor.
 fn numero_de_especies(resultados: &str) -> Option<usize> {
     let texto = texto_sin_etiquetas(ventana(resultados, 0, 100));
     let mut palabras = texto.split_whitespace();

@@ -84,7 +84,6 @@ impl Avistamiento {
         })
     }
 
-    /// Indica si el avistamiento es del día de la referencia o de hasta `dias` días antes (días UTC).
     pub fn es_reciente(&self, referencia: SystemTime, dias: u64) -> bool {
         let (Some(dia_referencia), Some(dia_avistamiento)) =
             (dia_utc(referencia), dia_utc(self.fecha))
@@ -95,7 +94,6 @@ impl Avistamiento {
         antiguedad >= 0 && antiguedad as u64 <= dias
     }
 
-    /// Indica si el avistamiento cae en algún tramo del río o en sus alrededores.
     pub fn pertenece_a_rio(&self, rios: &Rios, nombre_rio: &str) -> Result<bool, ErrorDominio> {
         for tramo in rios.tramos_de_rio(nombre_rio)? {
             if tramo.contiene_coordenadas(&self.coordenadas, RADIO_ALREDEDORES_METROS)? {
@@ -106,7 +104,6 @@ impl Avistamiento {
     }
 }
 
-/// Devuelve los días UTC desde el 1 de enero de 1970, o nada si el instante es anterior.
 fn dia_utc(instante: SystemTime) -> Option<i64> {
     let segundos = instante.duration_since(SystemTime::UNIX_EPOCH).ok()?.as_secs();
     i64::try_from(segundos / 86_400).ok()
@@ -146,7 +143,6 @@ pub enum PresenciaDepredador {
 }
 
 impl PresenciaDepredador {
-    /// Convierte un número de avistamientos en su estado de presencia.
     pub fn desde_cantidad(cantidad: usize) -> Self {
         match cantidad {
             0 => Self::SinRegistrosRecientes,

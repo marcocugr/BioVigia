@@ -1,4 +1,3 @@
-/// Devuelve hasta `longitud` bytes desde `desde` sin cortar nunca un carácter por la mitad.
 pub(super) fn ventana(texto: &str, desde: usize, longitud: usize) -> &str {
     let desde = desde.min(texto.len());
     let mut hasta = desde.saturating_add(longitud).min(texto.len());
@@ -8,7 +7,6 @@ pub(super) fn ventana(texto: &str, desde: usize, longitud: usize) -> &str {
     texto.get(desde..hasta).unwrap_or("")
 }
 
-/// Devuelve el `content` de cada etiqueta que lleve `atributo="valor"`, en cualquier orden de atributos.
 pub(super) fn contenidos_de_etiquetas(html: &str, atributo: &str, valor: &str) -> Vec<String> {
     let marca = format!("{atributo}=\"{valor}\"");
     let mut contenidos = Vec::new();
@@ -29,7 +27,6 @@ pub(super) fn contenidos_de_etiquetas(html: &str, atributo: &str, valor: &str) -
     contenidos
 }
 
-/// Lee el valor entre comillas de un atributo dentro del texto de una etiqueta.
 fn valor_de_atributo(etiqueta: &str, atributo: &str) -> Option<String> {
     let marca = format!(" {atributo}=\"");
     let inicio = etiqueta.find(&marca)? + marca.len();
@@ -38,7 +35,6 @@ fn valor_de_atributo(etiqueta: &str, atributo: &str) -> Option<String> {
     Some(resto[..fin].to_owned())
 }
 
-/// Quita las etiquetas HTML y deja un espacio en su lugar.
 pub(super) fn texto_sin_etiquetas(html: &str) -> String {
     let mut texto = String::with_capacity(html.len());
     let mut dentro_de_etiqueta = false;

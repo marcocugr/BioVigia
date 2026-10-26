@@ -29,7 +29,6 @@ pub struct ResultadoDepredador {
     pub presencia: PresenciaDepredador,
 }
 
-/// Dice, por cada depredador invasor del nombre común, cuántos avistamientos recientes tiene en el río.
 pub fn consultar_zona(
     peticion: &PeticionZona,
     fuentes: &FuentesDeVerdad,
@@ -44,7 +43,6 @@ pub fn consultar_zona(
         .collect()
 }
 
-/// Cuenta los avistamientos recientes del depredador en el río de la petición.
 fn resumir_depredador(
     nombre_cientifico: &str,
     peticion: &PeticionZona,
