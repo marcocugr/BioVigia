@@ -1,6 +1,6 @@
 use std::time::{Duration, SystemTime};
 
-use crate::dominio::avistamiento::{Avistamiento, Fuente};
+use crate::dominio::avistamiento::{Avistamiento, Fuente, SEGUNDOS_POR_DIA};
 use crate::dominio::coordenadas::{Coordenadas, Latitud, Longitud};
 use crate::dominio::especie::CatalogoEspecies;
 
@@ -70,7 +70,7 @@ fn parsear_fecha(texto: &str) -> Option<SystemTime> {
         return None;
     }
     let dias = u64::try_from(dias_desde_1970(anio, mes, dia)).ok()?;
-    Some(SystemTime::UNIX_EPOCH + Duration::from_secs(dias * 86_400))
+    Some(SystemTime::UNIX_EPOCH + Duration::from_secs(dias * SEGUNDOS_POR_DIA))
 }
 
 fn dias_del_mes(anio: i64, mes: i64) -> i64 {

@@ -51,12 +51,10 @@ pub fn reunir(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dominio::avistamiento::Fuente;
+    use crate::dominio::avistamiento::{Fuente, SEGUNDOS_POR_DIA};
     use crate::dominio::coordenadas::{Coordenadas, Latitud, Longitud};
     use crate::dominio::tramo::{Recuadro, TramoDeRio};
     use std::time::{Duration, SystemTime};
-
-    const DIA: u64 = 86_400;
 
     struct FuenteDePrueba(Fuente);
 
@@ -72,7 +70,7 @@ mod tests {
                 self.0,
                 pagina.into(),
                 "Neogale vison",
-                SystemTime::UNIX_EPOCH + Duration::from_secs(DIA),
+                SystemTime::UNIX_EPOCH + Duration::from_secs(SEGUNDOS_POR_DIA),
                 coordenadas,
             )?)
         }
@@ -111,7 +109,7 @@ mod tests {
         };
         let recuadro = Recuadro::new(punto(39.8, -4.6), punto(39.9, -4.5));
         let zona = TramoDeRio::new("TAJO-01".into(), Box::new(recuadro)).unwrap();
-        let referencia = SystemTime::UNIX_EPOCH + Duration::from_secs(DIA);
+        let referencia = SystemTime::UNIX_EPOCH + Duration::from_secs(SEGUNDOS_POR_DIA);
         assert_eq!(
             registro
                 .que_cuentan("Neogale vison", &zona, referencia, 0)

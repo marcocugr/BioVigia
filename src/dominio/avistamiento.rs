@@ -6,6 +6,8 @@ use crate::dominio::error::ErrorDominio;
 use crate::dominio::especie::CatalogoEspecies;
 use crate::dominio::tramo::TramoDeRio;
 
+pub const SEGUNDOS_POR_DIA: u64 = 86_400;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Fuente {
     INaturalist,
@@ -64,7 +66,7 @@ fn dia_utc(instante: SystemTime) -> Option<i64> {
         .duration_since(SystemTime::UNIX_EPOCH)
         .ok()?
         .as_secs();
-    i64::try_from(segundos / 86_400).ok()
+    i64::try_from(segundos / SEGUNDOS_POR_DIA).ok()
 }
 
 #[derive(Debug, Clone, Default)]
@@ -111,7 +113,6 @@ mod tests {
     use crate::dominio::tramo::Recuadro;
     use std::time::Duration;
 
-    const DIA: u64 = 86_400;
     const REFERENCIA: u64 = 1_788_264_000;
 
     fn instante(segundos: u64) -> SystemTime {
@@ -169,9 +170,9 @@ mod tests {
         let mut registro = RegistroAvistamientos::new();
         for (id, segundos) in [
             ("mismo-dia", REFERENCIA),
-            ("limite", REFERENCIA - 15 * DIA),
-            ("antiguo", REFERENCIA - 16 * DIA),
-            ("posterior", REFERENCIA + DIA),
+            ("limite", REFERENCIA - 15 * SEGUNDOS_POR_DIA),
+            ("antiguo", REFERENCIA - 16 * SEGUNDOS_POR_DIA),
+            ("posterior", REFERENCIA + SEGUNDOS_POR_DIA),
         ] {
             registro
                 .registrar(avistamiento(id, "Neogale vison", segundos, 39.85))

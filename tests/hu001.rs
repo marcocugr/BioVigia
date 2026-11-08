@@ -3,7 +3,7 @@ use std::time::{Duration, SystemTime};
 use biovigia::aplicacion::consulta::{ResultadoDepredador, consultar_zona};
 use biovigia::aplicacion::inaturalist::INaturalist;
 use biovigia::aplicacion::{ErrorFuente, nomenclator, reunir};
-use biovigia::dominio::avistamiento::RegistroAvistamientos;
+use biovigia::dominio::avistamiento::{RegistroAvistamientos, SEGUNDOS_POR_DIA};
 use biovigia::dominio::coordenadas::{Coordenadas, Latitud, Longitud};
 use biovigia::dominio::depredacion::RedDepredacion;
 use biovigia::dominio::error::ErrorDominio;
@@ -11,7 +11,6 @@ use biovigia::dominio::especie::CatalogoEspecies;
 use biovigia::dominio::tramo::{Recuadro, TramoDeRio};
 
 const VISON: &str = include_str!("fixtures/inaturalist/vison.html");
-const DIA: u64 = 86_400;
 const OBSERVACION_VISON: u64 = 1_787_875_200;
 
 fn instante(segundos: u64) -> SystemTime {
@@ -51,7 +50,7 @@ fn consultar(
     dias_despues: u64,
 ) -> Result<Vec<ResultadoDepredador>, ErrorDominio> {
     let (catalogo, red, registro) = escenario();
-    let referencia = instante(OBSERVACION_VISON + dias_despues * DIA);
+    let referencia = instante(OBSERVACION_VISON + dias_despues * SEGUNDOS_POR_DIA);
     consultar_zona(
         &catalogo,
         &red,
@@ -75,7 +74,7 @@ fn inaturalist_la_observacion_395192703_del_vison_se_registra_con_su_fecha_y_su_
     let (catalogo, _, mut registro) = escenario();
     let zona = zona_de_toledo();
     let el_dia_de_la_observacion = instante(OBSERVACION_VISON);
-    let el_dia_anterior = instante(OBSERVACION_VISON - DIA);
+    let el_dia_anterior = instante(OBSERVACION_VISON - SEGUNDOS_POR_DIA);
     assert_eq!(
         registro
             .que_cuentan("Neogale vison", &zona, el_dia_de_la_observacion, 0)

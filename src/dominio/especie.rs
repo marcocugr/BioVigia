@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::dominio::error::ErrorDominio;
 
@@ -37,15 +37,6 @@ impl CatalogoEspecies {
         }
         if nombre_comun.is_empty() {
             return Err(ErrorDominio::NombreComunRequerido);
-        }
-        let mut nuevos = HashSet::new();
-        for nombre in std::iter::once(&nombre_cientifico).chain(&nombres_anteriores) {
-            if !nuevos.insert(nombre)
-                || self.especies.contains_key(nombre)
-                || self.nombres_anteriores.contains_key(nombre)
-            {
-                return Err(ErrorDominio::NombreEspecieRepetido);
-            }
         }
         for anterior in nombres_anteriores {
             self.nombres_anteriores
