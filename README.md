@@ -140,30 +140,60 @@ Esta orden ejecuta `cargo check` (mira el [justfile](./justfile)), que comprueba
 
 ## Tests
 
-### Aserciones y test runner
+### Herramientas de test
 
-Son dos cosas distintas:
+La justificación también está en [docs/objetivos/objetivo-4/justificacion-herramientas-test.md](docs/objetivos/objetivo-4/justificacion-herramientas-test.md) y en el issue [#60](https://github.com/marcocugr/BioVigia/issues/60).
 
-- **Aserciones:** comparan lo obtenido con lo esperado y fallan con un mensaje. En Rust son las macros de la biblioteca estándar `assert!`, `assert_eq!` y `assert_ne!`.
-- **Test runner:** busca los tests, los ejecuta y da el informe. En Rust es `cargo test`, que viene con Cargo.
+**Qué es cada cosa.** Son herramientas distintas y se eligen por separado:
 
-**Criterios fijados antes de elegir:**
+- **Biblioteca de aserciones:** compara lo obtenido con lo esperado y falla con un mensaje. En Rust, `assert!`, `assert_eq!` y `assert_ne!` de la biblioteca estándar; a esta categoría pertenecen también `pretty_assertions` y `googletest`.
+- **Test runner:** descubre los tests, los ejecuta y da el informe. En Rust, el de Cargo (`cargo test`); `cargo-nextest` es otro runner.
+- **Fixtures y tests con parámetros:** ni aserciones ni runner, se apoyan en el runner. En Rust, `rstest`.
+
+**Criterios de aceptación, fijados antes de elegir:**
 
 1. Que viene con el lenguaje, para que funcione igual en WSL, en Docker y en la máquina de quien corrija.
 2. Que no escribe en el directorio de los fuentes salvo en el de compilación, y que ese directorio se puede cambiar (lo exige el objetivo 5).
 3. Que el mensaje de un fallo enseña el valor esperado y el obtenido.
 4. Que sirve para tests unitarios y de integración.
+5. Que funciona con la toolchain estable y la edición 2024 que fija `rust-toolchain.toml`.
 
-**Opciones consideradas:**
+**Criterios de búsqueda:**
 
-| Opción | Qué es | Criterio 1 | Criterio 2 | Criterio 3 |
-|---|---|---|---|---|
-| `cargo test` y las macros `assert*` | Runner y aserciones de la biblioteca estándar | Incluido | Sí, con `CARGO_TARGET_DIR` | Sí, `assert_eq!` enseña izquierda y derecha |
-| `cargo-nextest` | Otro runner | Hay que instalarlo | Sí | Mejor informe, pero no ejecuta doctests |
-| `pretty_assertions` | Aserciones con las diferencias resaltadas | Es una dependencia más | No aplica | Mejora el mensaje |
-| `rstest` | Fixtures y tests con parámetros | Es una dependencia más | No aplica | No aplica |
+1. Primero lo que trae el lenguaje: [The Rust Book, capítulo 11](https://doc.rust-lang.org/book/ch11-00-testing.html) y [`cargo test`](https://doc.rust-lang.org/cargo/commands/cargo-test.html) en The Cargo Book, para saber qué falta antes de añadir nada.
+2. Después, lo que la comunidad usa para cubrir lo que falta: [crates.io](https://crates.io) y [docs.rs](https://docs.rs), mirando la documentación de cada herramienta y no solo su popularidad.
+3. Entran en la lista las que tienen documentación propia, licencia libre e indican con qué toolchain funcionan; se descartan las que no dicen nada de eso.
 
-**Decisión:** `cargo test` y las macros de la biblioteca estándar. Es la única opción que cumple los cuatro criterios sin instalar ni añadir nada, y el proyecto no tiene todavía tantos tests repetitivos como para que `rstest` compense. Si más adelante los mensajes de fallo se quedan cortos, `pretty_assertions` se añadiría como dependencia de desarrollo.
+Las opciones salen de [nexte.st](https://nexte.st), [pretty_assertions](https://docs.rs/pretty_assertions) y [googletest](https://github.com/google/googletest-rust).
+
+**Opciones consideradas: bibliotecas de aserciones**
+
+| Opción | Qué aporta | 1. Viene con el lenguaje | 2. Escribe fuera de `target` | 3. Mensaje de fallo | 4. Unitarios e integración | 5. Toolchain |
+|---|---|---|---|---|---|---|
+| `assert!`, `assert_eq!`, `assert_ne!` | Aserciones simples | Sí | No | Enseña izquierda y derecha | Sí | Sí |
+| `pretty_assertions` | Sustituye `assert_eq!` y `assert_ne!` y resalta las diferencias | No, dependencia de desarrollo | Solo `Cargo.lock`, que `--locked` fija | Mejor en estructuras grandes | Sí | Sí |
+| `googletest` | Comparadores combinables (`assert_that!`, `expect_that!`) | No, dependencia de desarrollo | Solo `Cargo.lock`, que `--locked` fija | Muy descriptivo | Sí | Sí, pero su API no es estable hasta la 1.0 |
+
+**Opciones consideradas: test runners**
+
+| Opción | Qué aporta | 1. Viene con el lenguaje | 2. Escribe fuera de `target` | 4. Unitarios e integración | 5. Toolchain |
+|---|---|---|---|---|---|
+| `cargo test` | Descubre, ejecuta e informa; filtros por nombre y por fichero; ejecuta también los doctests | Sí | No, y el directorio se cambia con `CARGO_TARGET_DIR` | Sí | Sí |
+| `cargo-nextest` | Cada test en su proceso, reintentos, informes JUnit y JSON | No, hay que instalarlo | No, usa el directorio de Cargo | Sí | Sí, pero no ejecuta los doctests y hay que lanzarlos aparte con `cargo test --doc` |
+
+`rstest` no compite con ninguno: añade fixtures y tests con parámetros encima de `cargo test`.
+
+**Decisión:** las aserciones de la biblioteca estándar y `cargo test` como runner. Es la única combinación que cumple los cinco criterios sin instalar ni añadir nada, y los tests de este proyecto comparan valores pequeños (un número, una lista, un `Result`), donde el mensaje de `assert_eq!` basta.
+
+**Lo que se asume:** diferencias poco legibles si se comparan estructuras grandes, y ni reintentos ni informes JUnit.
+
+**Cuándo se reconsidera:**
+
+- Si aparecen comparaciones de estructuras grandes, `pretty_assertions`, que se activa con una línea por módulo.
+- Si la suite se vuelve lenta o con tests inestables, por ejemplo con red real en un objetivo futuro, `cargo-nextest`.
+- Si aparecen muchos tests con la misma forma, `rstest`.
+
+**Objetivo 5:** `cargo test` solo escribe en el directorio de compilación, que se cambia con `CARGO_TARGET_DIR`, y con `--locked` no toca `Cargo.lock`.
 
 ### Niveles de test
 
