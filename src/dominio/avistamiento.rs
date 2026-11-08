@@ -12,40 +12,6 @@ pub enum Fuente {
     Gbif,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum GradoCalidad {
-    Investigacion,
-    NecesitaIdentificacion,
-    Casual,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct EvidenciaFotografica {
-    autor: String,
-    urls: Vec<String>,
-}
-
-impl EvidenciaFotografica {
-    const AUTOR_DESCONOCIDO: &'static str = "Anónimo";
-
-    pub fn new(autor: Option<String>, urls: Vec<String>) -> Result<Self, ErrorDominio> {
-        if !urls.iter().all(|url| es_url_valida(url)) {
-            return Err(ErrorDominio::UrlFotoInvalida);
-        }
-        let autor = autor
-            .filter(|a| !a.trim().is_empty())
-            .unwrap_or_else(|| Self::AUTOR_DESCONOCIDO.to_owned());
-        Ok(Self { autor, urls })
-    }
-}
-
-fn es_url_valida(url: &str) -> bool {
-    let con_esquema = url
-        .strip_prefix("https://")
-        .or_else(|| url.strip_prefix("http://"));
-    con_esquema.is_some_and(|resto| !resto.is_empty() && !url.contains(char::is_whitespace))
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Avistamiento {
     fuente: Fuente,
@@ -53,8 +19,6 @@ pub struct Avistamiento {
     nombre_cientifico_especie: String,
     fecha: SystemTime,
     coordenadas: Coordenadas,
-    calidad: Option<GradoCalidad>,
-    evidencia: EvidenciaFotografica,
 }
 
 impl Avistamiento {
@@ -65,8 +29,6 @@ impl Avistamiento {
         nombre_especie: &str,
         fecha: SystemTime,
         coordenadas: Coordenadas,
-        calidad: Option<GradoCalidad>,
-        evidencia: EvidenciaFotografica,
     ) -> Result<Self, ErrorDominio> {
         let id_original = id_original.trim().to_owned();
         if id_original.is_empty() {
@@ -79,8 +41,6 @@ impl Avistamiento {
             nombre_cientifico_especie,
             fecha,
             coordenadas,
-            calidad,
-            evidencia,
         })
     }
 
@@ -182,8 +142,6 @@ mod tests {
             "Neogale vison",
             instante(segundos),
             Coordenadas::new(Latitud::new(39.85).unwrap(), Longitud::new(-4.55).unwrap()),
-            None,
-            EvidenciaFotografica::new(None, vec![]).unwrap(),
         )
         .unwrap()
     }
@@ -246,8 +204,6 @@ mod tests {
             "Neogale vison",
             SystemTime::UNIX_EPOCH - Duration::from_secs(DIA),
             Coordenadas::new(Latitud::new(0.0).unwrap(), Longitud::new(0.0).unwrap()),
-            None,
-            EvidenciaFotografica::new(None, vec![]).unwrap(),
         )
         .unwrap();
         assert!(!avistamiento.es_reciente(instante(MEDIODIA_1_SEP_2026), 100_000));
@@ -279,52 +235,8 @@ mod tests {
             "Neogale vison",
             instante(MEDIODIA_1_SEP_2026),
             punto(39.85, longitud),
-            None,
-            EvidenciaFotografica::new(None, vec![]).unwrap(),
         )
         .unwrap()
-    }
-
-    #[test]
-    fn las_fotos_con_url_http_o_https_son_validas() {
-        let evidencia = EvidenciaFotografica::new(
-            Some("Marco C".into()),
-            vec!["https://ejemplo.org/a.jpg".into(), "http://ejemplo.org/b.jpg".into()],
-        );
-        assert!(evidencia.is_ok());
-    }
-
-    #[test]
-    fn una_foto_sin_esquema_con_espacios_o_vacia_da_error() {
-        for url in ["ejemplo.org/a.jpg", "ftp://ejemplo.org/a.jpg", "https://", "https://ejemplo.org/a b.jpg", ""] {
-            let evidencia = EvidenciaFotografica::new(None, vec![url.into()]);
-            assert_eq!(evidencia, Err(ErrorDominio::UrlFotoInvalida), "con {url:?}");
-        }
-    }
-
-    #[test]
-    fn una_sola_url_mala_invalida_toda_la_evidencia() {
-        let evidencia = EvidenciaFotografica::new(None, vec!["https://ejemplo.org/a.jpg".into(), "mala".into()]);
-        assert_eq!(evidencia, Err(ErrorDominio::UrlFotoInvalida));
-    }
-
-    #[test]
-    fn la_evidencia_sin_fotos_es_valida() {
-        assert!(EvidenciaFotografica::new(Some("Marco C".into()), vec![]).is_ok());
-    }
-
-    #[test]
-    fn sin_autor_o_con_autor_en_blanco_el_autor_es_anonimo() {
-        for autor in [None, Some("".to_string()), Some("   ".to_string())] {
-            let evidencia = EvidenciaFotografica::new(autor, vec![]).unwrap();
-            assert_eq!(evidencia.autor, "Anónimo");
-        }
-    }
-
-    #[test]
-    fn con_autor_se_guarda_el_autor() {
-        let evidencia = EvidenciaFotografica::new(Some("Marco C".into()), vec![]).unwrap();
-        assert_eq!(evidencia.autor, "Marco C");
     }
 
     #[test]
@@ -337,8 +249,6 @@ mod tests {
                 "Neogale vison",
                 instante(MEDIODIA_1_SEP_2026),
                 punto(39.85, -4.55),
-                None,
-                EvidenciaFotografica::new(None, vec![]).unwrap(),
             );
             assert_eq!(resultado.unwrap_err(), ErrorDominio::AvistamientoIncompleto);
         }
@@ -358,8 +268,6 @@ mod tests {
             "Canis lupus",
             instante(MEDIODIA_1_SEP_2026),
             punto(39.85, -4.55),
-            None,
-            EvidenciaFotografica::new(None, vec![]).unwrap(),
         );
         assert_eq!(resultado.unwrap_err(), ErrorDominio::EspecieDesconocida);
     }
@@ -377,8 +285,6 @@ mod tests {
             "Lutra lutra",
             instante(MEDIODIA_1_SEP_2026),
             punto(39.85, -4.55),
-            None,
-            EvidenciaFotografica::new(None, vec![]).unwrap(),
         );
         assert_eq!(resultado.unwrap_err(), ErrorDominio::EspecieNoInvasora);
     }
@@ -392,12 +298,9 @@ mod tests {
             "Mustela vison",
             instante(MEDIODIA_1_SEP_2026),
             punto(39.85, -4.55),
-            Some(GradoCalidad::Casual),
-            EvidenciaFotografica::new(None, vec![]).unwrap(),
         )
         .unwrap();
         assert_eq!(avistamiento.nombre_cientifico_especie, "Neogale vison");
-        assert_eq!(avistamiento.calidad, Some(GradoCalidad::Casual));
     }
 
     #[test]
@@ -428,8 +331,6 @@ mod tests {
             "Micropterus salmoides",
             instante(MEDIODIA_1_SEP_2026),
             punto(39.85, -4.55),
-            None,
-            EvidenciaFotografica::new(None, vec![]).unwrap(),
         )
         .unwrap();
         let mut registro = RegistroAvistamientos::new();
