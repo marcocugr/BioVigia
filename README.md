@@ -48,8 +48,6 @@ La planificación relativa al objetivo 1 se encuentra respectivamente en los sig
 - [Historias de usuario](docs/objetivos/objetivo-1/historias-usuarios.md)
 - [Milestones](docs/objetivos/objetivo-1/milestones.md)
 
-La descomposición de la HU001 en issues del objetivo 4, con dónde está cada issue en el código y en los tests, se encuentra [aquí](docs/objetivos/objetivo-4/descomposicion.md).
-
 ### Lenguaje
 El modelo del dominio se implementa en **Rust**. Motivos:
 
