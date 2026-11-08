@@ -1,3 +1,5 @@
+pub mod inaturalist;
+
 use std::error::Error;
 use std::fmt;
 
