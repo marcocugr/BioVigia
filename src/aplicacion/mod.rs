@@ -1,4 +1,5 @@
 pub mod inaturalist;
+pub mod nomenclator;
 
 use std::error::Error;
 use std::fmt;
