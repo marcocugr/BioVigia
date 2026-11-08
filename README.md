@@ -57,13 +57,15 @@ El modelo del dominio se implementa en **Rust**. Motivos:
 - **`enum` con datos** para los valores cerrados del dominio (`Fuente`, `FaseVital`) y *newtypes* (`Latitud`, `Longitud`) para que intercambiar valores del mismo tipo base no compile.
 - **Herramientas oficiales integradas**: rustup para gestionar las versiones.
 
-El proyecto no tiene dependencias externas: todo se hace con la biblioteca estándar. La fecha de los avistamientos se representa con `std::time::SystemTime`, las URLs de las fotos se validan de forma mínima y los procesadores de HTML leen las páginas guardadas con búsquedas de texto, sin analizador de HTML.
+El proyecto no tiene dependencias externas: todo se hace con la biblioteca estándar. La fecha de los avistamientos se representa con `std::time::SystemTime` y el lector de la página de iNaturalist busca los campos con búsquedas de texto, sin analizador de HTML.
 
 ### Estructura del código
 
-- `src/dominio/`: el modelo y sus reglas, sin leer ficheros ni usar la red. Catálogo de especies, red de depredación, avistamientos, tramos y ríos, coordenadas y errores del dominio.
-- `src/aplicacion/consulta.rs`: el caso de uso de la HU001 (`consultar_zona`), que junta el catálogo, la red de depredación, los avistamientos y los ríos.
-- `src/aplicacion/procesadores_html/`: lee el HTML guardado de iNaturalist, GBIF, GloBI y GISD y lo convierte en datos del dominio.
+- `src/dominio/`: el modelo y sus reglas, sin leer ficheros ni usar la red. Catálogo de especies, red de depredación, avistamientos, tramos de río y coordenadas.
+- `src/aplicacion/consulta.rs`: el caso de uso de la HU001 (`consultar_zona`).
+- `src/aplicacion/mod.rs`: `FuenteAvistamientos`, el trait que cumple cualquier fuente de avistamientos, y `reunir`, que los lleva todos al mismo registro.
+- `src/aplicacion/inaturalist.rs`: la fuente iNaturalist, que lee la página guardada de una observación.
+- `src/aplicacion/nomenclator.rs`: las especies conocidas y sus depredaciones, en un solo sitio.
 - `tests/`: tests de integración y datos de prueba (ver [Tests](#tests)).
 
 ### Entorno de desarrollo
@@ -121,15 +123,15 @@ Instalación (una sola vez, ejecutada desde fuera del repositorio):
 ### Comprobación sintaxis de una clase
 La entidad que se comprueba es `CatalogoEspecies`, en [`src/dominio/especie.rs`](src/dominio/especie.rs).
 
-**Qué es:** el catálogo de especies que conoce el sistema. Cada especie se identifica por su nombre científico y guarda sus nombres comunes en español (puede tener varios) y si es invasora. También admite nombres científicos anteriores (sinónimos), para que un aviso que use un nombre antiguo se asocie a la especie correcta.
+**Qué es:** el catálogo de especies que conoce el sistema. Cada especie se identifica por su nombre científico y guarda su nombre común y si es invasora. También admite nombres científicos anteriores (sinónimos), para que un aviso que use un nombre antiguo se asocie a la especie correcta.
 
 **Qué hace:**
-- `registrar` da de alta una especie. Rechaza un nombre científico vacío, una lista de nombres comunes vacía o con algún nombre vacío, y nombres científicos repetidos, incluidos los que chocan con el nombre científico o los nombres anteriores de otra especie. Dos especies sí pueden compartir un nombre común.
+- `registrar` da de alta una especie. Rechaza nombres vacíos y nombres repetidos, incluidos los que chocan con el nombre científico o los nombres anteriores de otra especie.
 - `especie` recibe un nombre (actual o anterior) y devuelve el nombre científico vigente, o un error si la especie es desconocida.
 - `especie_invasora` hace lo mismo, pero solo devuelve la especie si es invasora, en caso contrario devuelve un error.
-- `especies_con_nombre_comun` recibe lo que escribe el pescador (por ejemplo "cangrejo") y devuelve, ordenadas, las especies que tienen ese texto en alguno de sus nombres comunes. Busca por subcadena y no distingue mayúsculas ni tildes. Una búsqueda vacía o un nombre que no corresponde a ninguna especie dan error, para que un nombre mal escrito no parezca una especie sin depredadores.
+- `especie_con_nombre_comun` recibe el nombre con el que busca el pescador y devuelve el nombre científico de la especie. No distingue mayúsculas, tildes ni espacios de los lados, porque el nombre se normaliza igual al buscar. Un nombre que no es de ninguna especie da error, para que un nombre mal escrito no parezca una especie sin depredadores.
 
-**Uso en el servicio:** BioVigía solo debe aceptar avistamientos y depredaciones de especies que existan en el catálogo y que sean invasoras. El catálogo es la fuente de la verdad de esa validación, de modo que un aviso con una especie desconocida o no invasora se rechaza antes de entrar en el sistema. También es quien traduce el nombre con el que busca el pescador a las especies concretas.
+**Uso en el servicio:** BioVigía solo debe aceptar avistamientos y depredaciones de especies que existan en el catálogo y que sean invasoras. El catálogo es la fuente de la verdad de esa validación y es quien traduce el nombre con el que busca el pescador a la especie concreta.
 
 **Orden check:**
 
@@ -165,51 +167,35 @@ Son dos cosas distintas:
 
 **Decisión:** `cargo test` y las macros de la biblioteca estándar. Es la única opción que cumple los cuatro criterios sin instalar ni añadir nada, y el proyecto no tiene todavía tantos tests repetitivos como para que `rstest` compense. Si más adelante los mensajes de fallo se quedan cortos, `pretty_assertions` se añadiría como dependencia de desarrollo.
 
+### Niveles de test
+
+| Nivel | Dónde | Qué prueba | Por qué a este nivel |
+|---|---|---|---|
+| Unitario | Módulo `tests` de cada fichero de `src/` | Un comportamiento de una pieza: qué avistamientos cuentan, qué especies depredan a otra, cómo se encuentra una especie por su nombre común, si unas coordenadas caen dentro de una zona, cómo se reúnen avistamientos de varias fuentes | Ahí vive la lógica de negocio de cada issue y se prueba sin ficheros ni el resto del sistema, así que si falla se sabe qué pieza es |
+| Integración | `tests/hu001.rs`, con la página guardada `tests/fixtures/inaturalist/vison.html` | Que una página real de iNaturalist acaba en el registro con su fecha y su lugar | Lo que puede romperse no es la lógica sino el formato de una página que no controlo, y solo una página real lo detecta |
+| Historia de usuario | `tests/hu001.rs` | `consultar_zona` de principio a fin con la API pública: el caso feliz y los que no lo son (fuera de la ventana, fuera de la zona, especie sin depredadores) | Es el criterio de aceptación de la HU001: comprueba que las piezas juntas resuelven el problema del pescador |
+
+No hay tests con red ni con navegador: los datos de prueba son páginas guardadas, para que los tests sean rápidos y repetibles. Tampoco se prueban getters, formatos de mensajes ni lo que ya garantizan los tipos.
+
 ### Organización de los tests
 
 - **Tests unitarios:** dentro de cada fichero de `src/`, en un módulo `tests` con `#[cfg(test)]`. Así pueden probar también las funciones privadas.
-- **Tests de integración:** en `tests/`, usando solo la API pública.
-  - `tests/hu001.rs`: la consulta de zona de la HU001 con los datos leídos de las páginas guardadas, con el camino feliz y con los que no lo son.
-  - `tests/fuentes_reales.rs`: cada procesador de HTML con las páginas guardadas.
-- **Datos de prueba:** las páginas guardadas están en `tests/fixtures/`:
-  - `inaturalist/vison.html` y `inaturalist/cangrejo.html`
-  - `gbif/vison.html` y `gbif/cangrejo.html`
-  - `gisd.html`
-  - `globi.html`
-- **Tests de los procesadores:** además de las páginas reales, cada procesador se prueba con trozos pequeños de HTML escritos en el propio test, para poder probar lo que una página real no trae: HTML cortado, caracteres como la ñ, campos que faltan o decorados que no hay que leer.
-
-### Qué casos se prueban
-
-La HU001 expresa un problema, y la lógica que la resuelve tiene casos que no son el feliz. Los tests de `consultar_zona` y de `hu001.rs` cubren:
-
-- Un depredador con avistamientos recientes en el río (presencia detectada) y el mismo río pasada la ventana (sin registros recientes).
-- El último día de la ventana (cuenta) y el siguiente (no cuenta).
-- Un avistamiento a 200 m del tramo (cuenta) y a 800 m (no cuenta).
-- Otro río sin avistamientos.
-- Un avistamiento de la propia presa, o de una invasora que no la depreda: no salen en el resultado.
-- Varios depredadores, ordenados y sin repetir.
-- Un nombre común que no existe y un río que no existe: dan error, no una lista vacía.
-- Un error de la geometría de un tramo: sale como error y no como "sin registros".
-
-Los errores del dominio tienen cada uno su test y todos tienen mensaje en castellano.
+- **Tests de integración:** en `tests/`, usando solo la API pública. `tests/hu001.rs` contiene el del lector de iNaturalist y los de la HU001.
+- **Datos de prueba:** la página guardada de la observación de un visón está en `tests/fixtures/inaturalist/vison.html`.
 
 ### Principios F.I.R.S.T.
 
-- **Fast:** los tests no usan red ni más disco que las páginas guardadas, que se incluyen al compilar con `include_str!`. Tardan milisegundos.
+- **Fast:** los tests no usan red ni más disco que la página guardada, que se incluye al compilar con `include_str!`. Tardan milisegundos.
 - **Independent:** cada test construye sus datos y no depende del resultado ni del orden de otro.
 - **Repeatable:** ningún test lee el reloj (la fecha de referencia se pasa como parámetro), usa la red o depende del orden de un `HashMap`: los resultados se devuelven ordenados.
 - **Self-validating:** cada test pasa o falla con una aserción, sin mirar ninguna salida.
-- **Timely:** los criterios de aceptación de cada issue están escritos como lista de comprobación y cada uno tiene su test. En este objetivo parte de los tests se añadieron después del código, en commits propios que enlazan el issue.
+- **Timely:** cada issue se cierra con el commit que añade su código y su test, y el commit enlaza el issue.
 
 ### Ejecución de los tests
 
 Todos, desde cero:
 
     just test
-
-Viendo lo que imprimen los tests (por ejemplo, el resultado de la consulta en `hu001`):
-
-    cargo test -- --nocapture
 
 Con otro directorio de compilación, sin tocar `Cargo.lock`, como pide el objetivo 5:
 
@@ -218,8 +204,8 @@ Con otro directorio de compilación, sin tocar `Cargo.lock`, como pide el objeti
 Solo un fichero o un test:
 
     cargo test --test hu001
-    cargo test es_reciente
+    cargo test cuentan
 
 ### Configuración
 
-La clave `test` de `iv.yaml` apunta a `tests/hu001.rs`, que prueba la historia de usuario completa con casos felices y no felices.
+La clave `test` de `iv.yaml` apunta a `tests/hu001.rs`, que prueba la lectura de la página real de iNaturalist y la historia de usuario completa con casos felices y no felices.
