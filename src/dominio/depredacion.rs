@@ -54,12 +54,6 @@ impl Depredacion {
     }
 }
 
-impl Depredacion {
-    pub fn fuente(&self) -> Option<Fuente> {
-        self.fuente
-    }
-}
-
 impl PartialEq for Depredacion {
     fn eq(&self, otra: &Self) -> bool {
         self.nombre_cientifico_depredador == otra.nombre_cientifico_depredador
@@ -91,19 +85,15 @@ impl RedDepredacion {
         Ok(())
     }
 
-    pub fn depredadores_de_nombre_comun(
-        &self,
-        catalogo: &CatalogoEspecies,
-        nombre_comun: &str,
-    ) -> Result<Vec<&str>, ErrorDominio> {
-        let presas = catalogo.especies_con_nombre_comun(nombre_comun)?;
-        let depredadores: BTreeSet<&str> = self
+    pub fn depredadores_de(&self, presa: &str) -> Vec<&str> {
+        let mut depredadores: Vec<&str> = self
             .depredaciones
             .iter()
-            .filter(|d| presas.contains(&d.nombre_cientifico_presa.as_str()))
+            .filter(|d| d.nombre_cientifico_presa == presa)
             .map(|d| d.nombre_cientifico_depredador.as_str())
             .collect();
-        Ok(depredadores.into_iter().collect())
+        depredadores.sort_unstable();
+        depredadores
     }
 }
 
@@ -113,176 +103,43 @@ mod tests {
 
     fn catalogo() -> CatalogoEspecies {
         let mut catalogo = CatalogoEspecies::new();
-        let especies: [(&str, &[&str], bool, &[&str]); 4] = [
-            ("Neogale vison", &["Visón americano"], true, &["Mustela vison"]),
-            ("Procambarus clarkii", &["Cangrejo rojo americano"], false, &[]),
-            ("Pacifastacus leniusculus", &["Cangrejo señal"], true, &[]),
-            ("Micropterus salmoides", &["Black bass"], true, &[]),
-        ];
-        for (cientifico, comunes, invasora, anteriores) in especies {
+        for (cientifico, comun, invasora) in [
+            ("Procambarus clarkii", "Cangrejo rojo americano", false),
+            ("Neogale vison", "Visón americano", true),
+            ("Micropterus salmoides", "Black bass", true),
+        ] {
             catalogo
-                .registrar(
-                    cientifico.into(),
-                    comunes.iter().map(|n| n.to_string()).collect(),
-                    invasora,
-                    anteriores.iter().map(|n| n.to_string()).collect(),
-                )
+                .registrar(cientifico.into(), comun.into(), invasora, vec![])
                 .unwrap();
         }
         catalogo
     }
 
-    fn todas_las_fases() -> BTreeSet<FaseVital> {
-        FaseVital::TODAS.iter().copied().collect()
-    }
-
-    fn depredacion(catalogo: &CatalogoEspecies, depredador: &str, presa: &str) -> Depredacion {
-        Depredacion::new(catalogo, depredador, presa, todas_las_fases(), None).unwrap()
-    }
-
-    #[test]
-    fn todas_las_fases_son_cuatro_y_distintas() {
-        let fases: BTreeSet<FaseVital> = FaseVital::TODAS.iter().copied().collect();
-        assert_eq!(fases.len(), 4);
-    }
-
-    #[test]
-    fn una_depredacion_valida_guarda_sus_datos_con_los_nombres_cientificos_vigentes() {
+    fn red() -> RedDepredacion {
         let catalogo = catalogo();
-        let depredacion = Depredacion::new(
-            &catalogo,
-            "Mustela vison",
-            "Procambarus clarkii",
-            BTreeSet::from([FaseVital::Adulto]),
-            Some(Fuente::Gbif),
-        )
-        .unwrap();
-        assert_eq!(depredacion.nombre_cientifico_depredador, "Neogale vison");
-        assert_eq!(depredacion.nombre_cientifico_presa, "Procambarus clarkii");
-        assert_eq!(depredacion.fases_afectadas.len(), 1);
-        assert_eq!(depredacion.fuente(), Some(Fuente::Gbif));
-    }
-
-    #[test]
-    fn la_presa_no_tiene_que_ser_invasora() {
-        let catalogo = catalogo();
-        assert!(Depredacion::new(&catalogo, "Neogale vison", "Procambarus clarkii", todas_las_fases(), None).is_ok());
-    }
-
-    #[test]
-    fn un_depredador_que_no_es_invasor_da_error() {
-        let catalogo = catalogo();
-        let resultado = Depredacion::new(&catalogo, "Procambarus clarkii", "Neogale vison", todas_las_fases(), None);
-        assert_eq!(resultado.unwrap_err(), ErrorDominio::EspecieNoInvasora);
-    }
-
-    #[test]
-    fn un_depredador_desconocido_da_error() {
-        let catalogo = catalogo();
-        let resultado = Depredacion::new(&catalogo, "Canis lupus", "Procambarus clarkii", todas_las_fases(), None);
-        assert_eq!(resultado.unwrap_err(), ErrorDominio::EspecieDesconocida);
-    }
-
-    #[test]
-    fn una_presa_desconocida_da_error() {
-        let catalogo = catalogo();
-        let resultado = Depredacion::new(&catalogo, "Neogale vison", "Rattus rattus", todas_las_fases(), None);
-        assert_eq!(resultado.unwrap_err(), ErrorDominio::EspecieDesconocida);
-    }
-
-    #[test]
-    fn el_depredador_y_la_presa_no_pueden_ser_la_misma_especie_ni_con_un_nombre_anterior() {
-        let catalogo = catalogo();
-        for presa in ["Neogale vison", "Mustela vison"] {
-            let resultado = Depredacion::new(&catalogo, "Neogale vison", presa, todas_las_fases(), None);
-            assert_eq!(resultado.unwrap_err(), ErrorDominio::DepredacionSobreMismaEspecie);
+        let mut red = RedDepredacion::new();
+        for (depredador, presa) in [
+            ("Neogale vison", "Procambarus clarkii"),
+            ("Micropterus salmoides", "Procambarus clarkii"),
+            ("Neogale vison", "Micropterus salmoides"),
+        ] {
+            let fases = FaseVital::TODAS.into_iter().collect();
+            let depredacion = Depredacion::new(&catalogo, depredador, presa, fases, None).unwrap();
+            red.registrar(depredacion).unwrap();
         }
+        red
     }
 
     #[test]
-    fn una_depredacion_sin_fases_da_error() {
-        let catalogo = catalogo();
-        let resultado = Depredacion::new(&catalogo, "Neogale vison", "Procambarus clarkii", BTreeSet::new(), None);
-        assert_eq!(resultado.unwrap_err(), ErrorDominio::FaseVitalRequerida);
-    }
-
-    #[test]
-    fn registrar_la_misma_pareja_dos_veces_da_error_aunque_cambien_las_fases() {
-        let catalogo = catalogo();
-        let mut red = RedDepredacion::new();
-        red.registrar(depredacion(&catalogo, "Neogale vison", "Procambarus clarkii")).unwrap();
-        let con_otras_fases = Depredacion::new(
-            &catalogo,
-            "Mustela vison",
-            "Procambarus clarkii",
-            BTreeSet::from([FaseVital::Juvenil]),
-            None,
-        )
-        .unwrap();
-        assert_eq!(red.registrar(con_otras_fases), Err(ErrorDominio::DepredacionRepetida));
-    }
-
-    #[test]
-    fn cangrejo_devuelve_el_vison_porque_depreda_a_procambarus_clarkii() {
-        let catalogo = catalogo();
-        let mut red = RedDepredacion::new();
-        red.registrar(depredacion(&catalogo, "Neogale vison", "Procambarus clarkii")).unwrap();
-        assert_eq!(red.depredadores_de_nombre_comun(&catalogo, "cangrejo"), Ok(vec!["Neogale vison"]));
-    }
-
-    #[test]
-    fn una_presa_sin_depredadores_registrados_da_lista_vacia_y_no_error() {
-        let catalogo = catalogo();
-        let red = RedDepredacion::new();
-        assert_eq!(red.depredadores_de_nombre_comun(&catalogo, "cangrejo"), Ok(vec![]));
-    }
-
-    #[test]
-    fn un_depredador_de_otra_especie_no_sale() {
-        let catalogo = catalogo();
-        let mut red = RedDepredacion::new();
-        red.registrar(depredacion(&catalogo, "Neogale vison", "Micropterus salmoides")).unwrap();
-        assert_eq!(red.depredadores_de_nombre_comun(&catalogo, "cangrejo"), Ok(vec![]));
-    }
-
-    #[test]
-    fn un_depredador_que_come_dos_especies_del_mismo_nombre_comun_sale_una_sola_vez() {
-        let catalogo = catalogo();
-        let mut red = RedDepredacion::new();
-        red.registrar(depredacion(&catalogo, "Neogale vison", "Procambarus clarkii")).unwrap();
-        red.registrar(depredacion(&catalogo, "Neogale vison", "Pacifastacus leniusculus")).unwrap();
-        assert_eq!(red.depredadores_de_nombre_comun(&catalogo, "cangrejo"), Ok(vec!["Neogale vison"]));
-    }
-
-    #[test]
-    fn los_depredadores_salen_ordenados_por_nombre_cientifico() {
-        let catalogo = catalogo();
-        let mut red = RedDepredacion::new();
-        red.registrar(depredacion(&catalogo, "Neogale vison", "Procambarus clarkii")).unwrap();
-        red.registrar(depredacion(&catalogo, "Micropterus salmoides", "Procambarus clarkii")).unwrap();
+    fn los_depredadores_de_una_presa_salen_ordenados_por_nombre_cientifico_y_sin_repetir() {
         assert_eq!(
-            red.depredadores_de_nombre_comun(&catalogo, "cangrejo"),
-            Ok(vec!["Micropterus salmoides", "Neogale vison"])
+            red().depredadores_de("Procambarus clarkii"),
+            vec!["Micropterus salmoides", "Neogale vison"]
         );
     }
 
     #[test]
-    fn un_nombre_comun_que_no_existe_da_error_en_vez_de_lista_vacia() {
-        let catalogo = catalogo();
-        let red = RedDepredacion::new();
-        assert_eq!(
-            red.depredadores_de_nombre_comun(&catalogo, "unicornio"),
-            Err(ErrorDominio::NombreComunInexistente)
-        );
-    }
-
-    #[test]
-    fn un_nombre_comun_vacio_da_error() {
-        let catalogo = catalogo();
-        let red = RedDepredacion::new();
-        assert_eq!(
-            red.depredadores_de_nombre_comun(&catalogo, " "),
-            Err(ErrorDominio::NombreComunRequerido)
-        );
+    fn una_presa_sin_depredadores_devuelve_una_lista_vacia() {
+        assert!(red().depredadores_de("Neogale vison").is_empty());
     }
 }

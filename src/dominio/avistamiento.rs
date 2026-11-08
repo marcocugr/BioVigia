@@ -132,22 +132,14 @@ mod tests {
 
     fn catalogo() -> CatalogoEspecies {
         let mut catalogo = CatalogoEspecies::new();
-        catalogo
-            .registrar(
-                "Neogale vison".into(),
-                vec!["Visón americano".into()],
-                true,
-                vec![],
-            )
-            .unwrap();
-        catalogo
-            .registrar(
-                "Micropterus salmoides".into(),
-                vec!["Black bass".into()],
-                true,
-                vec![],
-            )
-            .unwrap();
+        for (cientifico, comun) in [
+            ("Neogale vison", "Visón americano"),
+            ("Micropterus salmoides", "Black bass"),
+        ] {
+            catalogo
+                .registrar(cientifico.into(), comun.into(), true, vec![])
+                .unwrap();
+        }
         catalogo
     }
 
