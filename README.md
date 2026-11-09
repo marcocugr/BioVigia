@@ -141,99 +141,93 @@ Esta orden ejecuta `cargo check` (mira el [justfile](./justfile)), que comprueba
 ## Tests
 
 ### Herramientas de test
-
 La justificación también está en [docs/objetivos/objetivo-4/justificacion-herramientas-test.md](docs/objetivos/objetivo-4/justificacion-herramientas-test.md) y en el issue [#60](https://github.com/marcocugr/BioVigia/issues/60).
 
-**Qué es cada cosa.** Son herramientas distintas y se eligen por separado:
+Antes de escribir tests, había que decidir qué herramientas usar. No todas hacen lo mismo: una cosa es comprobar que el resultado obtenido coincide con el esperado, otra descubrir y ejecutar los tests, y otra preparar datos o repetir un test con varias entradas.
 
-- **Biblioteca de aserciones:** compara lo obtenido con lo esperado y falla con un mensaje. En Rust, `assert!`, `assert_eq!` y `assert_ne!` de la biblioteca estándar; a esta categoría pertenecen también `pretty_assertions` y `googletest`.
-- **Test runner:** descubre los tests, los ejecuta y da el informe. En Rust, el de Cargo (`cargo test`); `cargo-nextest` es otro runner.
-- **Fixtures y tests con parámetros:** ni aserciones ni runner, se apoyan en el runner. En Rust, `rstest`.
+- **Biblioteca de aserciones:** compara lo obtenido con lo esperado y falla con un mensaje si no coinciden. En Rust, `assert!`, `assert_eq!` y `assert_ne!` forman parte de la biblioteca estándar. Existen alternativas como `pretty_assertions` o `googletest`.
+- **Test runner:** descubre los tests, los ejecuta y presenta el resultado. En Rust, Cargo ya incluye uno mediante `cargo test`. Otra opción conocida es `cargo-nextest`.
+- **Fixtures y tests con parámetros:** sirven para preparar datos de prueba o ejecutar el mismo test con distintos valores. No sustituyen ni a las aserciones ni al runner; se apoyan en él. En Rust, `rstest` es una opción habitual.
 
-**Criterios de aceptación, fijados antes de elegir:**
+Antes de elegir, fijé estos criterios:
+1. Que viniera con el lenguaje, para que el proyecto funcionara igual en WSL, Docker y en la máquina de quien corrija el código.
+2. Que no escribiera en el directorio de los fuentes, salvo en el directorio de compilación, y que ese directorio pudiera cambiarse. Esto lo exige el objetivo 5.
+3. Que, al fallar un test, el mensaje mostrara el valor esperado y el obtenido.
+4. Que sirviera tanto para tests unitarios como para tests de integración.
+5. Que funcionara con la toolchain estable y la edición 2024 fijada en `rust-toolchain.toml`.
 
-1. Que viene con el lenguaje, para que funcione igual en WSL, en Docker y en la máquina de quien corrija.
-2. Que no escribe en el directorio de los fuentes salvo en el de compilación, y que ese directorio se puede cambiar (lo exige el objetivo 5).
-3. Que el mensaje de un fallo enseña el valor esperado y el obtenido.
-4. Que sirve para tests unitarios y de integración.
-5. Que funciona con la toolchain estable y la edición 2024 que fija `rust-toolchain.toml`.
+Para buscar opciones, empecé por lo que ya trae el lenguaje, consultando [The Rust Book, capítulo 11](https://doc.rust-lang.org/book/ch11-00-testing.html) y [`cargo test`](https://doc.rust-lang.org/cargo/commands/cargo-test.html) en un libro que vi que se llamaba "The Cargo Book". Después busqué en [crates.io](https://crates.io) y [docs.rs](https://docs.rs) herramientas que cubrieran lo que la biblioteca estándar no ofrecía. Solo consideré opciones con documentación propia, licencia libre e información sobre la toolchain compatible, descartando automaticamente las que no indicaban nada de esto.
 
-**Criterios de búsqueda:**
+Las alternativas que examiné salen de [nexte.st](https://nexte.st), [pretty_assertions](https://docs.rs/pretty_assertions) y [googletest](https://github.com/google/googletest-rust).
 
-1. Primero lo que trae el lenguaje: [The Rust Book, capítulo 11](https://doc.rust-lang.org/book/ch11-00-testing.html) y [`cargo test`](https://doc.rust-lang.org/cargo/commands/cargo-test.html) en The Cargo Book, para saber qué falta antes de añadir nada.
-2. Después, lo que la comunidad usa para cubrir lo que falta: [crates.io](https://crates.io) y [docs.rs](https://docs.rs), mirando la documentación de cada herramienta y no solo su popularidad.
-3. Entran en la lista las que tienen documentación propia, licencia libre e indican con qué toolchain funcionan; se descartan las que no dicen nada de eso.
+#### Bibliotecas de aserciones
+- **`assert!`, `assert_eq!` y `assert_ne!`:** son las aserciones de la biblioteca estándar. No requieren añadir ninguna dependencia, funcionan en tests unitarios y de integración, y `assert_eq!` muestra el valor esperado y el obtenido cuando falla.
+- **`pretty_assertions`:** mejora la presentación de las diferencias al comparar valores, especialmente útil con estructuras grandes. Sin embargo, es una dependencia de desarrollo y solo aporta una mejora de legibilidad, donde además, puede modificar `Cargo.lock`, aunque `--locked` impide que Cargo lo cambie.
+- **`googletest`:** ofrece comparadores combinables mediante `assert_that!` y `expect_that!`, con mensajes muy descriptivos. También es una dependencia de desarrollo y, en el momento de elegir, su API no era estable hasta la versión 1.0.
 
-Las opciones salen de [nexte.st](https://nexte.st), [pretty_assertions](https://docs.rs/pretty_assertions) y [googletest](https://github.com/google/googletest-rust).
+#### Test runners
+- **`cargo test`:** viene con Cargo. Descubre y ejecuta tests unitarios, de integración y doctests; permite filtrar por nombre o por fichero. No escribe fuera del directorio de compilación, que puede cambiarse con `CARGO_TARGET_DIR`.
+- **`cargo-nextest`:** ejecuta cada test en un proceso independiente, admite reintentos y puede generar informes en formatos como JUnit o JSON. Hay que instalarlo, no ejecuta los doctests por sí solo y estos deben lanzarse aparte con `cargo test --doc`.
 
-**Opciones consideradas: bibliotecas de aserciones**
+`rstest` no compite directamente con las anteriores: añade fixtures y tests con parámetros sobre `cargo test`.
 
-| Opción | Qué aporta | 1. Viene con el lenguaje | 2. Escribe fuera de `target` | 3. Mensaje de fallo | 4. Unitarios e integración | 5. Toolchain |
-|---|---|---|---|---|---|---|
-| `assert!`, `assert_eq!`, `assert_ne!` | Aserciones simples | Sí | No | Enseña izquierda y derecha | Sí | Sí |
-| `pretty_assertions` | Sustituye `assert_eq!` y `assert_ne!` y resalta las diferencias | No, dependencia de desarrollo | Solo `Cargo.lock`, que `--locked` fija | Mejor en estructuras grandes | Sí | Sí |
-| `googletest` | Comparadores combinables (`assert_that!`, `expect_that!`) | No, dependencia de desarrollo | Solo `Cargo.lock`, que `--locked` fija | Muy descriptivo | Sí | Sí, pero su API no es estable hasta la 1.0 |
+#### Decisión
+Elegí las aserciones de la biblioteca estándar y `cargo test` como runner.
 
-**Opciones consideradas: test runners**
+Es la única combinación que cumple los cinco criterios sin instalar nada ni añadir dependencias. Además, los tests de este proyecto comparan valores pequeños —un número, una lista o un `Result`—, de modo que el mensaje de `assert_eq!` es suficiente para entender un fallo.
 
-| Opción | Qué aporta | 1. Viene con el lenguaje | 2. Escribe fuera de `target` | 4. Unitarios e integración | 5. Toolchain |
-|---|---|---|---|---|---|
-| `cargo test` | Descubre, ejecuta e informa; filtros por nombre y por fichero; ejecuta también los doctests | Sí | No, y el directorio se cambia con `CARGO_TARGET_DIR` | Sí | Sí |
-| `cargo-nextest` | Cada test en su proceso, reintentos, informes JUnit y JSON | No, hay que instalarlo | No, usa el directorio de Cargo | Sí | Sí, pero no ejecuta los doctests y hay que lanzarlos aparte con `cargo test --doc` |
+Lo que se asume con esta decisión es que, si hubiera que comparar estructuras grandes, los mensajes podrían ser menos legibles; y que no se dispone de reintentos automáticos ni de informes JUnit o JSON.
 
-`rstest` no compite con ninguno: añade fixtures y tests con parámetros encima de `cargo test`.
+Se reconsiderará si:
+- Aparecen comparaciones de estructuras grandes: entonces `pretty_assertions` puede activarse añadiendo una línea por módulo.
+- La suite se vuelve lenta o aparecen tests inestables, por ejemplo si en un objetivo futuro se usa red real: entonces se considerará `cargo-nextest`.
+- Aparecen muchos tests con la misma forma: entonces se valorará `rstest`.
 
-**Decisión:** las aserciones de la biblioteca estándar y `cargo test` como runner. Es la única combinación que cumple los cinco criterios sin instalar ni añadir nada, y los tests de este proyecto comparan valores pequeños (un número, una lista, un `Result`), donde el mensaje de `assert_eq!` basta.
-
-**Lo que se asume:** diferencias poco legibles si se comparan estructuras grandes, y ni reintentos ni informes JUnit.
-
-**Cuándo se reconsidera:**
-
-- Si aparecen comparaciones de estructuras grandes, `pretty_assertions`, que se activa con una línea por módulo.
-- Si la suite se vuelve lenta o con tests inestables, por ejemplo con red real en un objetivo futuro, `cargo-nextest`.
-- Si aparecen muchos tests con la misma forma, `rstest`.
-
-**Objetivo 5:** `cargo test` solo escribe en el directorio de compilación, que se cambia con `CARGO_TARGET_DIR`, y con `--locked` no toca `Cargo.lock`.
+Respecto al objetivo 5, `cargo test` solo escribe en el directorio de compilación, que se cambia con `CARGO_TARGET_DIR`; con `--locked`, además, no modifica `Cargo.lock`.
 
 ### Niveles de test
+- **Tests unitarios.** Están en el módulo `tests` de cada fichero de `src/`. Prueban un comportamiento concreto de una pieza: qué avistamientos se cuentan, qué especies depredan a otra, cómo se encuentra una especie por su nombre común, si unas coordenadas caen dentro de una zona o cómo se reúnen avistamientos de varias fuentes. Ahí vive la lógica de negocio de cada issue, y se prueba sin ficheros ni el resto del sistema; si falla, se sabe qué pieza es.
+- **Tests de integración.** Están en `tests/hu001.rs` y usan la página guardada en `tests/fixtures/inaturalist/vison.html`. Comprueban que una página real de iNaturalist acaba produciendo el registro correcto, con su fecha y su lugar. Lo que puede romperse no es la lógica interna, sino el formato de una página externa que no controlo; solo una página real lo detecta.
+- **Tests de historia de usuario.** También están en `tests/hu001.rs`. Ejercitan `consultar_zona` de principio a fin con la API pública: el caso feliz y los casos en los que no lo es, como estar fuera de la ventana temporal, fuera de la zona o consultar una especie sin depredadores. Es el criterio de aceptación de la HU001: comprueba que las piezas, juntas, resuelven el problema del pescador.
 
-| Nivel | Dónde | Qué prueba | Por qué a este nivel |
-|---|---|---|---|
-| Unitario | Módulo `tests` de cada fichero de `src/` | Un comportamiento de una pieza: qué avistamientos cuentan, qué especies depredan a otra, cómo se encuentra una especie por su nombre común, si unas coordenadas caen dentro de una zona, cómo se reúnen avistamientos de varias fuentes | Ahí vive la lógica de negocio de cada issue y se prueba sin ficheros ni el resto del sistema, así que si falla se sabe qué pieza es |
-| Integración | `tests/hu001.rs`, con la página guardada `tests/fixtures/inaturalist/vison.html` | Que una página real de iNaturalist acaba en el registro con su fecha y su lugar | Lo que puede romperse no es la lógica sino el formato de una página que no controlo, y solo una página real lo detecta |
-| Historia de usuario | `tests/hu001.rs` | `consultar_zona` de principio a fin con la API pública: el caso feliz y los que no lo son (fuera de la ventana, fuera de la zona, especie sin depredadores) | Es el criterio de aceptación de la HU001: comprueba que las piezas juntas resuelven el problema del pescador |
-
-No hay tests con red ni con navegador: los datos de prueba son páginas guardadas, para que los tests sean rápidos y repetibles. Tampoco se prueban getters, formatos de mensajes ni lo que ya garantizan los tipos.
+No hay tests que usen red ni navegador: los datos de prueba son páginas guardadas, para que los tests sean rápidos y repetibles. Tampoco se prueban getters, formatos de mensajes ni comportamientos que ya garantizan los tipos.
 
 ### Organización de los tests
-
-- **Tests unitarios:** dentro de cada fichero de `src/`, en un módulo `tests` con `#[cfg(test)]`. Así pueden probar también las funciones privadas.
-- **Tests de integración:** en `tests/`, usando solo la API pública. `tests/hu001.rs` contiene el del lector de iNaturalist y los de la HU001.
+- **Tests unitarios:** dentro de cada fichero de `src/`, en un módulo `tests` con `#[cfg(test)]`. Así pueden probar también funciones privadas.
+- **Tests de integración:** en `tests/`, usando solo la API pública. `tests/hu001.rs` contiene el test del lector de iNaturalist y los de la HU001.
 - **Datos de prueba:** la página guardada de la observación de un visón está en `tests/fixtures/inaturalist/vison.html`.
 
 ### Principios F.I.R.S.T.
-
 - **Fast:** los tests no usan red ni más disco que la página guardada, que se incluye al compilar con `include_str!`. Tardan milisegundos.
-- **Independent:** cada test construye sus datos y no depende del resultado ni del orden de otro.
-- **Repeatable:** ningún test lee el reloj (la fecha de referencia se pasa como parámetro), usa la red o depende del orden de un `HashMap`: los resultados se devuelven ordenados.
-- **Self-validating:** cada test pasa o falla con una aserción, sin mirar ninguna salida.
-- **Timely:** cada issue se cierra con el commit que añade su código y su test, y el commit enlaza el issue.
+- **Independent:** cada test construye sus propios datos y no depende del resultado ni del orden de ejecución de otro.
+- **Repeatable:** ningún test lee el reloj —la fecha de referencia se pasa como parámetro—, usa la red o depende del orden de un `HashMap`; los resultados se devuelven ordenados.
+- **Self-validating:** cada test pasa o falla mediante una aserción, sin necesidad de mirar manualmente ninguna salida.
+- **Timely:** cada issue se cierra con el commit que añade tanto su código como su test, y el commit enlaza el issue.
 
 ### Ejecución de los tests
+Para ejecutar todos los tests desde cero:
 
-Todos, desde cero:
+```bash
+just test
+```
 
-    just test
+Para usar otro directorio de compilación, sin tocar `Cargo.lock`, como pide el objetivo 5:
 
-Con otro directorio de compilación, sin tocar `Cargo.lock`, como pide el objetivo 5:
+```bash
+CARGO_TARGET_DIR=/tmp/biovigia-build cargo test --locked
+```
 
-    CARGO_TARGET_DIR=/tmp/biovigia-build cargo test --locked
+Para ejecutar solo un fichero de test:
 
-Solo un fichero o un test:
+```bash
+cargo test --test hu001
+```
 
-    cargo test --test hu001
-    cargo test cuentan
+Para ejecutar solo los tests cuyo nombre contenga una palabra:
+
+```bash
+cargo test cuentan
+```
 
 ### Configuración
-
-La clave `test` de `iv.yaml` apunta a `tests/hu001.rs`, que prueba la lectura de la página real de iNaturalist y la historia de usuario completa con casos felices y no felices.
+La clave `test` de `iv.yaml` apunta a `tests/hu001.rs`, que prueba tanto la lectura de la página real de iNaturalist como la historia de usuario completa, con casos felices y casos en los que la consulta no produce un resultado válido.
