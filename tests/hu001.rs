@@ -2,7 +2,7 @@ use std::time::{Duration, SystemTime};
 
 use biovigia::aplicacion::consulta::{ResultadoDepredador, consultar_zona};
 use biovigia::aplicacion::inaturalist::INaturalist;
-use biovigia::aplicacion::{ErrorFuente, nomenclator, reunir};
+use biovigia::aplicacion::{nomenclator, reunir};
 use biovigia::dominio::avistamiento::{RegistroAvistamientos, SEGUNDOS_POR_DIA};
 use biovigia::dominio::coordenadas::{Coordenadas, Latitud, Longitud};
 use biovigia::dominio::depredacion::RedDepredacion;
@@ -39,8 +39,7 @@ fn zona_del_ebro() -> TramoDeRio {
 
 fn escenario() -> (CatalogoEspecies, RedDepredacion, RegistroAvistamientos) {
     let (catalogo, red) = nomenclator::cargar().unwrap();
-    let mut registro = RegistroAvistamientos::new();
-    reunir(&mut registro, &catalogo, &INaturalist, VISON).unwrap();
+    let registro = reunir(&catalogo, &[(&INaturalist, VISON)]).unwrap();
     (catalogo, red, registro)
 }
 
@@ -71,7 +70,8 @@ fn vison(avistamientos: usize) -> ResultadoDepredador {
 
 #[test]
 fn inaturalist_la_observacion_395192703_del_vison_se_registra_con_su_fecha_y_su_lugar() {
-    let (catalogo, _, mut registro) = escenario();
+    let (catalogo, _) = nomenclator::cargar().unwrap();
+    let registro = reunir(&catalogo, &[(&INaturalist, VISON), (&INaturalist, VISON)]).unwrap();
     let zona = zona_de_toledo();
     let el_dia_de_la_observacion = instante(OBSERVACION_VISON);
     let el_dia_anterior = instante(OBSERVACION_VISON - SEGUNDOS_POR_DIA);
@@ -85,10 +85,6 @@ fn inaturalist_la_observacion_395192703_del_vison_se_registra_con_su_fecha_y_su_
         registro
             .que_cuentan("Neogale vison", &zona, el_dia_anterior, 0)
             .is_empty()
-    );
-    assert_eq!(
-        reunir(&mut registro, &catalogo, &INaturalist, VISON),
-        Err(ErrorFuente::Dominio(ErrorDominio::AvistamientoRepetido))
     );
 }
 

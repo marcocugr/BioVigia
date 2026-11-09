@@ -39,13 +39,14 @@ pub trait FuenteAvistamientos {
 }
 
 pub fn reunir(
-    registro: &mut RegistroAvistamientos,
     catalogo: &CatalogoEspecies,
-    fuente: &dyn FuenteAvistamientos,
-    pagina: &str,
-) -> Result<(), ErrorFuente> {
-    registro.registrar(fuente.leer(pagina, catalogo)?)?;
-    Ok(())
+    paginas: &[(&dyn FuenteAvistamientos, &str)],
+) -> Result<RegistroAvistamientos, ErrorFuente> {
+    let avistamientos = paginas
+        .iter()
+        .map(|(fuente, pagina)| fuente.leer(pagina, catalogo))
+        .collect::<Result<Vec<_>, _>>()?;
+    Ok(RegistroAvistamientos::new(avistamientos))
 }
 
 #[cfg(test)]
@@ -53,6 +54,7 @@ mod tests {
     use super::*;
     use crate::dominio::avistamiento::{Fuente, SEGUNDOS_POR_DIA};
     use crate::dominio::coordenadas::{Coordenadas, Latitud, Longitud};
+    use crate::dominio::especie::Especie;
     use crate::dominio::tramo::{Recuadro, TramoDeRio};
     use std::time::{Duration, SystemTime};
 
@@ -77,30 +79,16 @@ mod tests {
     }
 
     fn catalogo() -> CatalogoEspecies {
-        let mut catalogo = CatalogoEspecies::new();
-        catalogo
-            .registrar(
-                "Neogale vison".into(),
-                "Visón americano".into(),
-                true,
-                vec![],
-            )
-            .unwrap();
-        catalogo
+        let vison = Especie::new(
+            "Neogale vison".into(),
+            "Visón americano".into(),
+            true,
+            vec![],
+        );
+        CatalogoEspecies::new(vec![vison.unwrap()])
     }
 
-    #[test]
-    fn los_avistamientos_de_distintas_fuentes_acaban_en_el_mismo_registro() {
-        let catalogo = catalogo();
-        let mut registro = RegistroAvistamientos::new();
-        reunir(
-            &mut registro,
-            &catalogo,
-            &FuenteDePrueba(Fuente::INaturalist),
-            "1",
-        )
-        .unwrap();
-        reunir(&mut registro, &catalogo, &FuenteDePrueba(Fuente::Gbif), "1").unwrap();
+    fn zona() -> TramoDeRio {
         let punto = |latitud, longitud| {
             Coordenadas::new(
                 Latitud::new(latitud).unwrap(),
@@ -108,36 +96,39 @@ mod tests {
             )
         };
         let recuadro = Recuadro::new(punto(39.8, -4.6), punto(39.9, -4.5));
-        let zona = TramoDeRio::new("TAJO-01".into(), Box::new(recuadro)).unwrap();
+        TramoDeRio::new("TAJO-01".into(), Box::new(recuadro)).unwrap()
+    }
+
+    fn cuantos_cuentan(registro: &RegistroAvistamientos) -> usize {
         let referencia = SystemTime::UNIX_EPOCH + Duration::from_secs(SEGUNDOS_POR_DIA);
-        assert_eq!(
-            registro
-                .que_cuentan("Neogale vison", &zona, referencia, 0)
-                .len(),
-            2
-        );
+        registro
+            .que_cuentan("Neogale vison", &zona(), referencia, 0)
+            .len()
     }
 
     #[test]
-    fn el_mismo_avistamiento_leido_dos_veces_de_la_misma_fuente_da_error() {
-        let catalogo = catalogo();
-        let mut registro = RegistroAvistamientos::new();
-        reunir(
-            &mut registro,
-            &catalogo,
-            &FuenteDePrueba(Fuente::INaturalist),
-            "1",
+    fn los_avistamientos_de_distintas_fuentes_acaban_en_el_mismo_registro() {
+        let registro = reunir(
+            &catalogo(),
+            &[
+                (&FuenteDePrueba(Fuente::INaturalist), "1"),
+                (&FuenteDePrueba(Fuente::Gbif), "1"),
+            ],
         )
         .unwrap();
-        let repetido = reunir(
-            &mut registro,
-            &catalogo,
-            &FuenteDePrueba(Fuente::INaturalist),
-            "1",
-        );
-        assert_eq!(
-            repetido,
-            Err(ErrorFuente::Dominio(ErrorDominio::AvistamientoRepetido))
-        );
+        assert_eq!(cuantos_cuentan(&registro), 2);
+    }
+
+    #[test]
+    fn el_mismo_avistamiento_leido_dos_veces_de_la_misma_fuente_cuenta_una_sola_vez() {
+        let registro = reunir(
+            &catalogo(),
+            &[
+                (&FuenteDePrueba(Fuente::INaturalist), "1"),
+                (&FuenteDePrueba(Fuente::INaturalist), "1"),
+            ],
+        )
+        .unwrap();
+        assert_eq!(cuantos_cuentan(&registro), 1);
     }
 }

@@ -69,23 +69,18 @@ fn dia_utc(instante: SystemTime) -> Option<i64> {
     i64::try_from(segundos / SEGUNDOS_POR_DIA).ok()
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct RegistroAvistamientos {
     avistamientos: HashMap<(Fuente, String), Avistamiento>,
 }
 
 impl RegistroAvistamientos {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn registrar(&mut self, avistamiento: Avistamiento) -> Result<(), ErrorDominio> {
-        let clave = (avistamiento.fuente, avistamiento.id_original.clone());
-        if self.avistamientos.contains_key(&clave) {
-            return Err(ErrorDominio::AvistamientoRepetido);
-        }
-        self.avistamientos.insert(clave, avistamiento);
-        Ok(())
+    pub fn new(avistamientos: Vec<Avistamiento>) -> Self {
+        let avistamientos = avistamientos
+            .into_iter()
+            .map(|a| ((a.fuente, a.id_original.clone()), a))
+            .collect();
+        Self { avistamientos }
     }
 
     pub fn que_cuentan(
@@ -110,6 +105,7 @@ impl RegistroAvistamientos {
 mod tests {
     use super::*;
     use crate::dominio::coordenadas::{Latitud, Longitud};
+    use crate::dominio::especie::Especie;
     use crate::dominio::tramo::Recuadro;
     use std::time::Duration;
 
@@ -132,16 +128,17 @@ mod tests {
     }
 
     fn catalogo() -> CatalogoEspecies {
-        let mut catalogo = CatalogoEspecies::new();
-        for (cientifico, comun) in [
+        let especies = [
             ("Neogale vison", "Visón americano"),
             ("Micropterus salmoides", "Black bass"),
-        ] {
-            catalogo
-                .registrar(cientifico.into(), comun.into(), true, vec![])
-                .unwrap();
-        }
-        catalogo
+        ];
+        CatalogoEspecies::new(
+            especies
+                .map(|(cientifico, comun)| {
+                    Especie::new(cientifico.into(), comun.into(), true, vec![]).unwrap()
+                })
+                .into(),
+        )
     }
 
     fn avistamiento(id: &str, especie: &str, segundos: u64, latitud: f64) -> Avistamiento {
@@ -167,33 +164,38 @@ mod tests {
 
     #[test]
     fn cuentan_los_de_hace_x_dias_o_menos_y_no_los_mas_antiguos_ni_los_posteriores() {
-        let mut registro = RegistroAvistamientos::new();
-        for (id, segundos) in [
-            ("mismo-dia", REFERENCIA),
-            ("limite", REFERENCIA - 15 * SEGUNDOS_POR_DIA),
-            ("antiguo", REFERENCIA - 16 * SEGUNDOS_POR_DIA),
-            ("posterior", REFERENCIA + SEGUNDOS_POR_DIA),
-        ] {
-            registro
-                .registrar(avistamiento(id, "Neogale vison", segundos, 39.85))
-                .unwrap();
-        }
+        let registro = RegistroAvistamientos::new(vec![
+            avistamiento("mismo-dia", "Neogale vison", REFERENCIA, 39.85),
+            avistamiento(
+                "limite",
+                "Neogale vison",
+                REFERENCIA - 15 * SEGUNDOS_POR_DIA,
+                39.85,
+            ),
+            avistamiento(
+                "antiguo",
+                "Neogale vison",
+                REFERENCIA - 16 * SEGUNDOS_POR_DIA,
+                39.85,
+            ),
+            avistamiento(
+                "posterior",
+                "Neogale vison",
+                REFERENCIA + SEGUNDOS_POR_DIA,
+                39.85,
+            ),
+        ]);
         let cuentan = registro.que_cuentan("Neogale vison", &zona(), instante(REFERENCIA), 15);
         assert_eq!(ids(cuentan), vec!["limite", "mismo-dia"]);
     }
 
     #[test]
     fn solo_cuentan_los_de_la_especie_pedida_y_los_de_la_zona() {
-        let mut registro = RegistroAvistamientos::new();
-        for (id, especie, latitud) in [
-            ("en-la-zona", "Neogale vison", 39.85),
-            ("fuera-de-la-zona", "Neogale vison", 41.65),
-            ("otra-especie", "Micropterus salmoides", 39.85),
-        ] {
-            registro
-                .registrar(avistamiento(id, especie, REFERENCIA, latitud))
-                .unwrap();
-        }
+        let registro = RegistroAvistamientos::new(vec![
+            avistamiento("en-la-zona", "Neogale vison", REFERENCIA, 39.85),
+            avistamiento("fuera-de-la-zona", "Neogale vison", REFERENCIA, 41.65),
+            avistamiento("otra-especie", "Micropterus salmoides", REFERENCIA, 39.85),
+        ]);
         let cuentan = registro.que_cuentan("Neogale vison", &zona(), instante(REFERENCIA), 15);
         assert_eq!(ids(cuentan), vec!["en-la-zona"]);
     }

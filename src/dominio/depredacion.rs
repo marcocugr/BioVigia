@@ -64,25 +64,14 @@ impl PartialEq for Depredacion {
 
 impl Eq for Depredacion {}
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct RedDepredacion {
     depredaciones: Vec<Depredacion>,
 }
 
 impl RedDepredacion {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn registrar(&mut self, depredacion: Depredacion) -> Result<(), ErrorDominio> {
-        if self.depredaciones.iter().any(|otra| {
-            otra.nombre_cientifico_depredador == depredacion.nombre_cientifico_depredador
-                && otra.nombre_cientifico_presa == depredacion.nombre_cientifico_presa
-        }) {
-            return Err(ErrorDominio::DepredacionRepetida);
-        }
-        self.depredaciones.push(depredacion);
-        Ok(())
+    pub fn new(depredaciones: Vec<Depredacion>) -> Self {
+        Self { depredaciones }
     }
 
     pub fn depredadores_de(&self, presa: &str) -> Vec<&str> {
@@ -100,34 +89,38 @@ impl RedDepredacion {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dominio::especie::Especie;
 
     fn catalogo() -> CatalogoEspecies {
-        let mut catalogo = CatalogoEspecies::new();
-        for (cientifico, comun, invasora) in [
+        let especies = [
             ("Procambarus clarkii", "Cangrejo rojo americano", false),
             ("Neogale vison", "Visón americano", true),
             ("Micropterus salmoides", "Black bass", true),
-        ] {
-            catalogo
-                .registrar(cientifico.into(), comun.into(), invasora, vec![])
-                .unwrap();
-        }
-        catalogo
+        ];
+        CatalogoEspecies::new(
+            especies
+                .map(|(cientifico, comun, invasora)| {
+                    Especie::new(cientifico.into(), comun.into(), invasora, vec![]).unwrap()
+                })
+                .into(),
+        )
     }
 
     fn red() -> RedDepredacion {
         let catalogo = catalogo();
-        let mut red = RedDepredacion::new();
-        for (depredador, presa) in [
+        let depredaciones = [
             ("Neogale vison", "Procambarus clarkii"),
             ("Micropterus salmoides", "Procambarus clarkii"),
             ("Neogale vison", "Micropterus salmoides"),
-        ] {
-            let fases = FaseVital::TODAS.into_iter().collect();
-            let depredacion = Depredacion::new(&catalogo, depredador, presa, fases, None).unwrap();
-            red.registrar(depredacion).unwrap();
-        }
-        red
+        ];
+        RedDepredacion::new(
+            depredaciones
+                .map(|(depredador, presa)| {
+                    let fases = FaseVital::TODAS.into_iter().collect();
+                    Depredacion::new(&catalogo, depredador, presa, fases, None).unwrap()
+                })
+                .into(),
+        )
     }
 
     #[test]

@@ -10,10 +10,8 @@ pub enum ErrorDominio {
     EspecieDesconocida,
     EspecieNoInvasora,
     AvistamientoIncompleto,
-    AvistamientoRepetido,
     DepredacionSobreMismaEspecie,
     FaseVitalRequerida,
-    DepredacionRepetida,
 }
 
 impl fmt::Display for ErrorDominio {
@@ -26,10 +24,8 @@ impl fmt::Display for ErrorDominio {
             Self::EspecieDesconocida => "la especie no está en el catálogo",
             Self::EspecieNoInvasora => "la especie no es invasora",
             Self::AvistamientoIncompleto => "el avistamiento necesita su identificador original",
-            Self::AvistamientoRepetido => "el avistamiento ya está registrado",
             Self::DepredacionSobreMismaEspecie => "el depredador y la presa no pueden ser la misma especie",
             Self::FaseVitalRequerida => "la depredación debe afectar al menos a una fase vital",
-            Self::DepredacionRepetida => "la misma depredación entre dos especies está repetida",
         };
         f.write_str(mensaje)
     }

@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn una_pagina_que_no_es_una_observacion_da_error() {
-        let catalogo = CatalogoEspecies::new();
+        let catalogo = CatalogoEspecies::new(vec![]);
         assert_eq!(
             INaturalist.leer("<html></html>", &catalogo),
             Err(ErrorFuente::CampoNoEncontrado(

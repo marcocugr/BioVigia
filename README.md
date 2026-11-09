@@ -63,7 +63,7 @@ El proyecto no tiene dependencias externas: todo se hace con la biblioteca está
 
 - `src/dominio/`: el modelo y sus reglas, sin leer ficheros ni usar la red. Catálogo de especies, red de depredación, avistamientos, tramos de río y coordenadas.
 - `src/aplicacion/consulta.rs`: el caso de uso de la HU001 (`consultar_zona`).
-- `src/aplicacion/mod.rs`: `FuenteAvistamientos`, el trait que cumple cualquier fuente de avistamientos, y `reunir`, que los lleva todos al mismo registro.
+- `src/aplicacion/mod.rs`: `FuenteAvistamientos`, el trait que cumple cualquier fuente de avistamientos, y `reunir`, que construye un único registro con los avistamientos de todas las fuentes.
 - `src/aplicacion/inaturalist.rs`: la fuente iNaturalist, que lee la página guardada de una observación.
 - `src/aplicacion/nomenclator.rs`: las especies conocidas y sus depredaciones, en un solo sitio.
 - `tests/`: tests de integración y datos de prueba (ver [Tests](#tests)).
@@ -126,7 +126,7 @@ La entidad que se comprueba es `CatalogoEspecies`, en [`src/dominio/especie.rs`]
 **Qué es:** el catálogo de especies que conoce el sistema. Cada especie se identifica por su nombre científico y guarda su nombre común y si es invasora. También admite nombres científicos anteriores (sinónimos), para que un aviso que use un nombre antiguo se asocie a la especie correcta.
 
 **Qué hace:**
-- `registrar` da de alta una especie. Rechaza nombres vacíos.
+- `Especie::new` crea una especie y rechaza nombres vacíos. `CatalogoEspecies::new` recibe las especies ya creadas; el catálogo no decide qué especies se dan de alta.
 - `especie` recibe un nombre (actual o anterior) y devuelve el nombre científico vigente, o un error si la especie es desconocida.
 - `especie_invasora` hace lo mismo, pero solo devuelve la especie si es invasora, en caso contrario devuelve un error.
 - `especie_con_nombre_comun` recibe el nombre con el que busca el pescador y devuelve el nombre científico de la especie. No distingue mayúsculas, tildes ni espacios de los lados, porque el nombre se normaliza igual al buscar. Un nombre que no es de ninguna especie da error, para que un nombre mal escrito no parezca una especie sin depredadores.

@@ -1,6 +1,6 @@
 use crate::dominio::depredacion::{Depredacion, FaseVital, RedDepredacion};
 use crate::dominio::error::ErrorDominio;
-use crate::dominio::especie::CatalogoEspecies;
+use crate::dominio::especie::{CatalogoEspecies, Especie};
 
 const ESPECIES: [(&str, &str, bool, &[&str]); 2] = [
     (
@@ -15,15 +15,21 @@ const ESPECIES: [(&str, &str, bool, &[&str]); 2] = [
 const DEPREDACIONES: [(&str, &str); 1] = [("Neogale vison", "Procambarus clarkii")];
 
 pub fn cargar() -> Result<(CatalogoEspecies, RedDepredacion), ErrorDominio> {
-    let mut catalogo = CatalogoEspecies::new();
+    let mut especies = Vec::new();
     for (cientifico, comun, invasora, anteriores) in ESPECIES {
         let anteriores = anteriores.iter().map(|nombre| nombre.to_string()).collect();
-        catalogo.registrar(cientifico.into(), comun.into(), invasora, anteriores)?;
+        especies.push(Especie::new(
+            cientifico.into(),
+            comun.into(),
+            invasora,
+            anteriores,
+        )?);
     }
-    let mut red = RedDepredacion::new();
+    let catalogo = CatalogoEspecies::new(especies);
+    let mut depredaciones = Vec::new();
     for (depredador, presa) in DEPREDACIONES {
         let fases = FaseVital::TODAS.into_iter().collect();
-        red.registrar(Depredacion::new(&catalogo, depredador, presa, fases, None)?)?;
+        depredaciones.push(Depredacion::new(&catalogo, depredador, presa, fases, None)?);
     }
-    Ok((catalogo, red))
+    Ok((catalogo, RedDepredacion::new(depredaciones)))
 }
