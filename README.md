@@ -57,16 +57,7 @@ El modelo del dominio se implementa en **Rust**. Motivos:
 - **`enum` con datos** para los valores cerrados del dominio (`Fuente`, `FaseVital`) y *newtypes* (`Latitud`, `Longitud`) para que intercambiar valores del mismo tipo base no compile.
 - **Herramientas oficiales integradas**: rustup para gestionar las versiones.
 
-El proyecto no tiene dependencias externas: todo se hace con la biblioteca estándar. La fecha de los avistamientos se representa con `std::time::SystemTime` y el lector de la página de iNaturalist busca los campos con búsquedas de texto, sin analizador de HTML.
-
-### Estructura del código
-
-- `src/dominio/`: el modelo y sus reglas, sin leer ficheros ni usar la red. Catálogo de especies, red de depredación, avistamientos, tramos de río y coordenadas.
-- `src/aplicacion/consulta.rs`: el caso de uso de la HU001 (`consultar_zona`).
-- `src/aplicacion/mod.rs`: `FuenteAvistamientos`, el trait que cumple cualquier fuente de avistamientos, y `reunir`, que construye un único registro con los avistamientos de todas las fuentes.
-- `src/aplicacion/inaturalist.rs`: la fuente iNaturalist, que lee la página guardada de una observación.
-- `src/aplicacion/nomenclator.rs`: las especies conocidas y sus depredaciones, en un solo sitio.
-- `tests/`: tests de integración y datos de prueba (ver [Tests](#tests)).
+En el Milestone 0 se usa solo la biblioteca estándar, hasta que haya gestor de dependencias: la fecha de los avistamientos se representa con `std::time::SystemTime` y las URLs de las fotos se validan de forma mínima.
 
 ### Entorno de desarrollo
 La versión de Rust del proyecto está fijada en el fichero [`rust-toolchain.toml`](rust-toolchain.toml), que es la única fuente de verdad para la versión.
@@ -91,8 +82,6 @@ Para cambiar de versión de Rust se modifica la línea `channel` de `rust-toolch
 **Reflexión final:** Cargo es el gestor oficial de Rust. Declara las dependencias en `Cargo.toml` y fija las versiones exactas en `Cargo.lock`. Bazel y Nix resuelven problemas de build a gran escala que este proyecto no tiene, y siguen partiendo del formato de Cargo. Cargo funciona igual con pocas dependencias que con muchas, y en la comunidad Rust no hay debate sobre usarlo. Se elige Cargo.
 
 No requiere instalación adicional: viene con rustup (ver [Entorno de desarrollo](#entorno-de-desarrollo)). Razonamiento ampliado en el issue [#21](https://github.com/marcocugr/BioVigia/issues/21).
-
-**Actualización del objetivo 4:** el producto mínimamente viable no necesita ninguna dependencia directa, porque los datos de las fuentes se leen de páginas HTML guardadas y no de sus APIs. Cargo se sigue usando para fijar la versión del compilador y las dependencias en `Cargo.lock`, que ahora solo contiene el propio paquete.
 
 ### Gestor de tareas
 
@@ -126,13 +115,12 @@ La entidad que se comprueba es `CatalogoEspecies`, en [`src/dominio/especie.rs`]
 **Qué es:** el catálogo de especies que conoce el sistema. Cada especie se identifica por su nombre científico y guarda su nombre común y si es invasora. También admite nombres científicos anteriores (sinónimos), para que un aviso que use un nombre antiguo se asocie a la especie correcta.
 
 **Qué hace:**
-- `Especie::new` crea una especie y rechaza nombres vacíos. `CatalogoEspecies::new` recibe las especies ya creadas; el catálogo no decide qué especies se dan de alta.
+- `registrar` da de alta una especie. Rechaza nombres vacíos y nombres repetidos, incluidos los que chocan con el nombre científico o los nombres anteriores de otra especie.
 - `especie` recibe un nombre (actual o anterior) y devuelve el nombre científico vigente, o un error si la especie es desconocida.
 - `especie_invasora` hace lo mismo, pero solo devuelve la especie si es invasora, en caso contrario devuelve un error.
-- `especie_con_nombre_comun` recibe el nombre con el que busca el pescador y devuelve el nombre científico de la especie. No distingue mayúsculas, tildes ni espacios de los lados, porque el nombre se normaliza igual al buscar. Un nombre que no es de ninguna especie da error, para que un nombre mal escrito no parezca una especie sin depredadores.
 
 **Orden check:**
 
     just check
 
-Esta orden ejecuta `cargo check` (mira el [justfile](./justfile)), que comprueba únicamente que el código compila (sintaxis y tipos), incluida esta entidad. No ejecuta pruebas ni formato ni linter: las pruebas se ejecutan con `just test` (ver [Tests](#tests)).
+Esta orden ejecuta `cargo check` (mira el [justfile](./justfile)), que comprueba únicamente que el código compila (sintaxis y tipos), incluida esta entidad. Todavía no ejecuta pruebas ni formato ni linter.
