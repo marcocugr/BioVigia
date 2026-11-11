@@ -64,75 +64,24 @@ impl PartialEq for Depredacion {
 
 impl Eq for Depredacion {}
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct RedDepredacion {
     depredaciones: Vec<Depredacion>,
 }
 
 impl RedDepredacion {
-    pub fn new(depredaciones: Vec<Depredacion>) -> Self {
-        Self { depredaciones }
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    pub fn depredadores_de(&self, presa: &str) -> Vec<&str> {
-        let mut depredadores: Vec<&str> = self
-            .depredaciones
-            .iter()
-            .filter(|d| d.nombre_cientifico_presa == presa)
-            .map(|d| d.nombre_cientifico_depredador.as_str())
-            .collect();
-        depredadores.sort_unstable();
-        depredadores
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::dominio::especie::Especie;
-
-    fn catalogo() -> CatalogoEspecies {
-        let especies = [
-            ("Procambarus clarkii", "Cangrejo rojo americano", false),
-            ("Neogale vison", "Visón americano", true),
-            ("Micropterus salmoides", "Black bass", true),
-        ];
-        CatalogoEspecies::new(
-            especies
-                .map(|(cientifico, comun, invasora)| {
-                    Especie::new(cientifico.into(), comun.into(), invasora, vec![]).unwrap()
-                })
-                .into(),
-        )
-    }
-
-    fn red() -> RedDepredacion {
-        let catalogo = catalogo();
-        let depredaciones = [
-            ("Neogale vison", "Procambarus clarkii"),
-            ("Micropterus salmoides", "Procambarus clarkii"),
-            ("Neogale vison", "Micropterus salmoides"),
-        ];
-        RedDepredacion::new(
-            depredaciones
-                .map(|(depredador, presa)| {
-                    let fases = FaseVital::TODAS.into_iter().collect();
-                    Depredacion::new(&catalogo, depredador, presa, fases, None).unwrap()
-                })
-                .into(),
-        )
-    }
-
-    #[test]
-    fn los_depredadores_de_una_presa_salen_ordenados_por_nombre_cientifico_y_sin_repetir() {
-        assert_eq!(
-            red().depredadores_de("Procambarus clarkii"),
-            vec!["Micropterus salmoides", "Neogale vison"]
-        );
-    }
-
-    #[test]
-    fn una_presa_sin_depredadores_devuelve_una_lista_vacia() {
-        assert!(red().depredadores_de("Neogale vison").is_empty());
+    pub fn registrar(&mut self, depredacion: Depredacion) -> Result<(), ErrorDominio> {
+        if self.depredaciones.iter().any(|otra| {
+            otra.nombre_cientifico_depredador == depredacion.nombre_cientifico_depredador
+                && otra.nombre_cientifico_presa == depredacion.nombre_cientifico_presa
+        }) {
+            return Err(ErrorDominio::DepredacionRepetida);
+        }
+        self.depredaciones.push(depredacion);
+        Ok(())
     }
 }

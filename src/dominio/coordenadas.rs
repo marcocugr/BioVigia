@@ -104,14 +104,4 @@ impl Coordenadas {
             Longitud::con_hemisferio(grados_longitud, hemisferio_ew)?,
         ))
     }
-
-    pub fn entre(&self, una_esquina: &Coordenadas, otra_esquina: &Coordenadas) -> bool {
-        let (sur, norte) = ordenados(una_esquina.latitud.0, otra_esquina.latitud.0);
-        let (oeste, este) = ordenados(una_esquina.longitud.0, otra_esquina.longitud.0);
-        (sur..=norte).contains(&self.latitud.0) && (oeste..=este).contains(&self.longitud.0)
-    }
-}
-
-fn ordenados(a: f64, b: f64) -> (f64, f64) {
-    if a <= b { (a, b) } else { (b, a) }
 }
