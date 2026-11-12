@@ -1,17 +1,26 @@
 use std::fmt::Debug;
 
 use crate::dominio::error::ErrorDominio;
+use crate::dominio::coordenadas::Coordenadas;
 
-pub trait GeometriaTramo: Debug {}
+const RADIO_TOLERANCIA_METROS: f64 = 100.0;
+
+#[derive(Debug)]
+pub struct GeometriaTramo {
+    noroeste: Coordenadas,
+    noreste: Coordenadas,
+    suroeste: Coordenadas,
+    sureste: Coordenadas,
+}
 
 #[derive(Debug)]
 pub struct TramoDeRio {
     codigo: String,
-    geometria: Box<dyn GeometriaTramo>,
+    geometria: GeometriaTramo,
 }
 
 impl TramoDeRio {
-    pub fn new(codigo: String, geometria: Box<dyn GeometriaTramo>) -> Result<Self, ErrorDominio> {
+    pub fn new(codigo: String, geometria: GeometriaTramo) -> Result<Self, ErrorDominio> {
         let codigo = codigo.trim().to_owned();
         if codigo.is_empty() {
             return Err(ErrorDominio::CodigoTramoRequerido);
