@@ -12,13 +12,14 @@ pub fn setup(catalogo: &mut CatalogoEspecies, red: &mut RedDepredacion, registro
     catalogo.registrar("Procambarus clarkii".to_string(), "Cangrejo rojo americano".to_string(), true, vec![])?;
     catalogo.registrar("Salmo trutta".to_string(), "Trucha común".to_string(), false, vec![])?;
     red.registrar(Depredacion::new(catalogo, "Neogale vison", "Salmo trutta", BTreeSet::from([FaseVital::Adulto, FaseVital::Juvenil]), None)?)?;
+    red.registrar(Depredacion::new(catalogo, "Neogale vison", "Procambarus clarkii", BTreeSet::from([FaseVital::Adulto]), None)?)?;
     red.registrar(Depredacion::new(catalogo, "Procambarus clarkii", "Salmo trutta", BTreeSet::from([FaseVital::HuevoEmbrion]), None)?)?;
     registro.registrar(extraer_avistamiento_inaturalist("tests/fixtures/inaturalist/vison.html")?)?;
     *tramo = TramoDeRio::new("TR-001".to_string(), GeometriaTramo {
-        noroeste: Coordenadas::new(Latitud::new(40.5)?, Longitud::new(-4.0)?),
-        noreste: Coordenadas::new(Latitud::new(40.5)?, Longitud::new(-3.5)?),
-        suroeste: Coordenadas::new(Latitud::new(40.0)?, Longitud::new(-4.0)?),
-        sureste: Coordenadas::new(Latitud::new(40.0)?, Longitud::new(-3.5)?),
+        noroeste: Coordenadas::new(Latitud::new(40.05)?, Longitud::new(-4.65)?),
+        noreste: Coordenadas::new(Latitud::new(40.05)?, Longitud::new(-4.64)?),
+        suroeste: Coordenadas::new(Latitud::new(40.03)?, Longitud::new(-4.65)?),
+        sureste: Coordenadas::new(Latitud::new(40.03)?, Longitud::new(-4.64)?),
     })?;
     Ok(())
 }
