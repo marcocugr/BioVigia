@@ -84,4 +84,27 @@ impl RedDepredacion {
         self.depredaciones.push(depredacion);
         Ok(())
     }
+
+    pub fn depredadores_de(&self, presa: &str) -> Vec<String> {
+        self.depredaciones
+            .iter()
+            .filter(|d| d.nombre_cientifico_presa == presa)
+            .map(|d| d.nombre_cientifico_depredador.clone())
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assertor::VecAssertion;
+
+    #[test]
+    fn buscar_depredadores_de_presa_devuelve_todos_los_depredadores() {
+        let mut red = RedDepredacion::new();
+        red.registrar(Depredacion { nombre_cientifico_depredador: "Neogale vison".to_string(), nombre_cientifico_presa: "Procambarus clarkii".to_string(), fases_afectadas: BTreeSet::from([FaseVital::Adulto]), fuente: None }).unwrap();
+        red.registrar(Depredacion { nombre_cientifico_depredador: "Lutra lutra".to_string(), nombre_cientifico_presa: "Procambarus clarkii".to_string(), fases_afectadas: BTreeSet::from([FaseVital::Adulto]), fuente: None }).unwrap();
+        let depredadores = red.depredadores_de("Procambarus clarkii");
+        assertor::assert_that!(depredadores).has_length(2);
+    }
 }

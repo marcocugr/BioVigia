@@ -82,6 +82,14 @@ impl Avistamiento {
             evidencia,
         })
     }
+
+    pub fn coordenadas(&self) -> &Coordenadas {
+        &self.coordenadas
+    }
+
+    pub fn nombre_cientifico(&self) -> &str {
+        &self.nombre_cientifico_especie
+    }
 }
 
 #[derive(Debug, Clone, Default)]
@@ -101,5 +109,41 @@ impl RegistroAvistamientos {
         }
         self.avistamientos.insert(clave, avistamiento);
         Ok(())
+    }
+
+    pub fn avistamientos_en_ventana(&self, fecha_referencia: SystemTime, dias: u64) -> Vec<&Avistamiento> {
+        let ventana = std::time::Duration::from_secs(dias * 24 * 60 * 60);
+        self.avistamientos
+            .values()
+            .filter(|a| {
+                if let Ok(diferencia) = fecha_referencia.duration_since(a.fecha) {
+                    diferencia <= ventana
+                } else {
+                    false
+                }
+            })
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assertor::VecAssertion;
+
+    #[test]
+    fn filtrar_avistamientos_por_ventana_temporal() {
+        let mut catalogo = CatalogoEspecies::new();
+        catalogo.registrar("Neogale vison".to_string(), "Visón".to_string(), true, vec![]).unwrap();
+        let hoy = SystemTime::now();
+        let hace_6_dias = hoy - std::time::Duration::from_secs(6 * 24 * 60 * 60);
+        let hace_20_dias = hoy - std::time::Duration::from_secs(20 * 24 * 60 * 60);
+        let coordenadas = Coordenadas::new(crate::dominio::coordenadas::Latitud::new(40.0).unwrap(), crate::dominio::coordenadas::Longitud::new(-3.0).unwrap());
+        let evidencia = EvidenciaFotografica::new(None, vec!["https://ejemplo.com/foto.jpg".to_string()]).unwrap();
+        let mut registro = RegistroAvistamientos::new();
+        registro.registrar(Avistamiento::new(&catalogo, Fuente::INaturalist, "1".to_string(), "Neogale vison", hace_6_dias, coordenadas, None, evidencia.clone()).unwrap()).unwrap();
+        registro.registrar(Avistamiento::new(&catalogo, Fuente::INaturalist, "2".to_string(), "Neogale vison", hace_20_dias, coordenadas, None, evidencia).unwrap()).unwrap();
+        let resultado = registro.avistamientos_en_ventana(hoy, 15);
+        assertor::assert_that!(resultado).has_length(1);
     }
 }
