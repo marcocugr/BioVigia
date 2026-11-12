@@ -82,6 +82,14 @@ impl Avistamiento {
             evidencia,
         })
     }
+
+    pub fn coordenadas(&self) -> &Coordenadas {
+        &self.coordenadas
+    }
+
+    pub fn nombre_cientifico(&self) -> &str {
+        &self.nombre_cientifico_especie
+    }
 }
 
 #[derive(Debug, Clone, Default)]
