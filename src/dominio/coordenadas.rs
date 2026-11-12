@@ -37,7 +37,7 @@ impl TryFrom<char> for HemisferioEW {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Latitud(f64);
+pub struct Latitud(pub(crate) f64);
 
 impl Latitud {
     pub fn new(grados: f64) -> Result<Self, ErrorDominio> {
@@ -60,7 +60,7 @@ impl Latitud {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Longitud(f64);
+pub struct Longitud(pub(crate) f64);
 
 impl Longitud {
     pub fn new(grados: f64) -> Result<Self, ErrorDominio> {
@@ -84,8 +84,8 @@ impl Longitud {
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Coordenadas {
-    latitud: Latitud,
-    longitud: Longitud,
+    pub(crate) latitud: Latitud,
+    pub(crate) longitud: Longitud,
 }
 
 impl Coordenadas {
