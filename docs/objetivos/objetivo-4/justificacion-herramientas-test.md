@@ -1,8 +1,8 @@
 # Herramientas de tests
 
-Esto es lo que he entendido que hace cada cosa:
-- Biblioteca de aserciones: compara lo obtenido con lo esperado y falla con un mensaje si no coinciden.
-- Test runner: descubre los tests, los ejecuta y presenta el resultado.
+Las herramientas de testing que voy a evaluar se dividen en dos categorías:
+- Bibliotecas de aserciones.
+- Test runners.
 
 Los criterios que fijo a la hora de decidir son:
 - Sencillez de implementar.
