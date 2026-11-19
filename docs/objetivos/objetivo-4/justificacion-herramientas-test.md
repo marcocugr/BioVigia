@@ -5,11 +5,11 @@ Las herramientas de testing que voy a evaluar se dividen en dos categorías:
 - Test runners.
 
 Los criterios que fijo a la hora de decidir son:
-- Sencillez de implementar.
-- Que funcionen y se puedan implementar sin ningun tipo de carencia en WSL y Linux.
-- Que no dependa de APIs de nadie.
-- Que los errores se expresen claramente y sepa que test/s han fallado y en que parte.
-- Que a ser posible, este documentado personalmente por rust.
+- Sencillez de integración en el proyecto.
+- Compatibilidad con WSL y Linux.
+- No depender de APIs ni servicios externos.
+- Claridad de los errores y facilidad para identificar qué test ha fallado.
+- Documentación oficial y actualizada.
 
 Tanto para la biblioteca de aserciones como para el test runner analizaré unica y exclusivamente todos los candidatos que considere oportunos para cada uno. Considero que es una muestra totalmente razonable y suficiente para una solida conclusion y eleccion por mi parte.
 
