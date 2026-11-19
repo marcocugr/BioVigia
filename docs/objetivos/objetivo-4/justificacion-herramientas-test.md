@@ -67,7 +67,7 @@ Los que evaluare son:
 **Me quedo con assertor**, es una nueva que no he usado hasta ahora en ningun proyecto mío personal, la veo bastante interesante, es la que más se ajusta a mi proyecto y me da esa libertad mínima pero no excesiva (como googletest) para poder construir los test como yo personalmente considero más claros y one liners, lo cual facilita la revisión de este trabajo por parte del corrector. Además me dice mucho más claro que falla, esto me es irrelevante, pero es un plus que me llevo de la mano junto con la expresividad. Además, esta decisión es una que personalmente quiero experimentar.
 
 ## Test runner
-Nuevamente, clasifico en dos grupos, aunque en este caso, en rust no hay gran cosa:
+Para evaluar los test runners tendré en cuenta los mismos criterios anteriores, prestando especial atención a la sencillez de integración, la compatibilidad con mis entornos de desarrollo y la información que proporcionan cuando falla un test.
 
 ### Estandares
 Los que evaluare son:
