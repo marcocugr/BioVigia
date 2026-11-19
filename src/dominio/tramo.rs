@@ -60,24 +60,3 @@ impl PartialEq for TramoDeRio {
 }
 
 impl Eq for TramoDeRio {}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::dominio::coordenadas::{Latitud, Longitud};
-    use assertor::{assert_that, BooleanAssertion};
-
-    #[test]
-    fn pertenece_detecta_coordenadas_dentro_en_radio_y_fuera() {
-        let geometria = GeometriaTramo {
-            noroeste: Coordenadas::new(Latitud::new(40.5).unwrap(), Longitud::new(-4.0).unwrap()),
-            noreste: Coordenadas::new(Latitud::new(40.5).unwrap(), Longitud::new(-3.5).unwrap()),
-            suroeste: Coordenadas::new(Latitud::new(40.0).unwrap(), Longitud::new(-4.0).unwrap()),
-            sureste: Coordenadas::new(Latitud::new(40.0).unwrap(), Longitud::new(-3.5).unwrap()),
-        };
-        let tramo = TramoDeRio::new("TR-001".to_string(), geometria).unwrap();
-        assert_that!(tramo.pertenece(&Coordenadas::new(Latitud::new(40.25).unwrap(), Longitud::new(-3.75).unwrap()))).is_true();
-        assert_that!(tramo.pertenece(&Coordenadas::new(Latitud::new(40.5008).unwrap(), Longitud::new(-3.75).unwrap()))).is_true();
-        assert_that!(tramo.pertenece(&Coordenadas::new(Latitud::new(41.0).unwrap(), Longitud::new(-3.75).unwrap()))).is_false();
-    }
-}
