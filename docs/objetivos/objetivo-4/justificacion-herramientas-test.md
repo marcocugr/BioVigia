@@ -19,7 +19,7 @@ No voy a realizar comparativas de rendimiento, ya que el proyecto se encuentra e
 Voy a clasificar en dos grupos:
 
 ### Estandares
-Los que evaluare son:
+Los que evaluare en funcion de los criterios citados previamente son:
 - [assert!](https://doc.rust-lang.org/std/macro.assert.html): afirma que una variable booleana es true, si no se cumple la asercion, salta la asercion.
   - Es bastante sencilla de usar, simplemente es poner `assert!(variable);`
   - Honestamente considero que si que la voy a usar en un momento u otro si que me interesará poder consultar algo tan trivial.
