@@ -57,6 +57,7 @@ Los que evaluare son:
   - Tienes que poner arriba del código para usarla simplemente `use assertor::*;`
   - A ver, este puede estar bastante curioso porque sigue siendo todo one liner, por ejemplo `assert_that!("foobarbaz").contains("bar");`, si es cierto que es mucho mas limpio que encadenar funciones y según lo que he visto usas el assert_that! absolutamente para todo, no tienes que decidir entre los 3 nativos (assert!, assert_eq! y assert_ne!)
   - Creo que es el más interesante comentado hasta ahora y si que tiene un uso claro y real en mi proyecto ahora mismo.
+  - Este estilo se conoce como BDD (Behavior Driven Development), ya que permite expresar directamente los comportamientos que esperamos comprobar en los tests.
 - [more-asserts](https://docs.rs/more-asserts/latest/more_asserts/): Es la que tengo más clara que no pienso usar.
   - Básicamente sale del circulo de assert!, assert_eq! y assert_ne! introduciendote otras nuevas que visualmente a la hora de programar si que son correctas pero completamente irrelevantes porque sus funcionalidades ya se pueden hacer usando las 3 anteriores. Algunos ejemplos son assert_le!, assert_lt!, etc... igual que expanden este repertorio, como no podia ser de otra forma, tambien incluyendo debug_ de acordes a estos.
   - No pienso perder el tiempo ni buscando como se instala la dependencia.
