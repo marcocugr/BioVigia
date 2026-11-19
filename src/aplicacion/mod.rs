@@ -1,3 +1,2 @@
 pub mod extractor_inaturalist;
-pub mod setup;
 pub mod biovigia;

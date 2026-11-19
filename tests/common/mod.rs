@@ -1,11 +1,11 @@
 use std::collections::BTreeSet;
-use crate::aplicacion::extractor_inaturalist::extraer_avistamiento_inaturalist;
-use crate::dominio::avistamiento::RegistroAvistamientos;
-use crate::dominio::coordenadas::{Coordenadas, Latitud, Longitud};
-use crate::dominio::depredacion::{FaseVital, RedDepredacion, Depredacion};
-use crate::dominio::error::ErrorDominio;
-use crate::dominio::especie::CatalogoEspecies;
-use crate::dominio::tramo::{TramoDeRio, GeometriaTramo};
+use biovigia::aplicacion::extractor_inaturalist::extraer_avistamiento_inaturalist;
+use biovigia::dominio::avistamiento::RegistroAvistamientos;
+use biovigia::dominio::coordenadas::{Coordenadas, Latitud, Longitud};
+use biovigia::dominio::depredacion::{FaseVital, RedDepredacion, Depredacion};
+use biovigia::dominio::error::ErrorDominio;
+use biovigia::dominio::especie::CatalogoEspecies;
+use biovigia::dominio::tramo::{TramoDeRio, GeometriaTramo};
 
 pub fn setup(catalogo: &mut CatalogoEspecies, red: &mut RedDepredacion, registro: &mut RegistroAvistamientos, tramo: &mut TramoDeRio) -> Result<(), ErrorDominio> {
     catalogo.registrar("Neogale vison".to_string(), "Visón americano".to_string(), true, vec![])?;

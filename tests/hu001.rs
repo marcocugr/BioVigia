@@ -1,5 +1,7 @@
+mod common;
+
 use biovigia::aplicacion::biovigia::{consultar_depredadores_en_zona, EstadoPresencia};
-use biovigia::aplicacion::setup::setup;
+use common::setup;
 use biovigia::dominio::avistamiento::RegistroAvistamientos;
 use biovigia::dominio::coordenadas::{Coordenadas, Latitud, Longitud};
 use biovigia::dominio::depredacion::RedDepredacion;
