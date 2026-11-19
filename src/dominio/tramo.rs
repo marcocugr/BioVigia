@@ -28,6 +28,10 @@ impl TramoDeRio {
         Ok(Self { codigo, geometria })
     }
 
+    pub fn codigo(&self) -> &str {
+        &self.codigo
+    }
+
     pub fn pertenece(&self, coordenadas: &Coordenadas) -> bool {
         distancia_punto_a_rectangulo(coordenadas, &self.geometria) <= RADIO_TOLERANCIA_METROS
     }
