@@ -5,6 +5,19 @@ use crate::dominio::depredacion::RedDepredacion;
 use crate::dominio::especie::CatalogoEspecies;
 use crate::dominio::tramo::TramoDeRio;
 
+pub struct BioVigia {
+    pub catalogo: CatalogoEspecies,
+    pub red: RedDepredacion,
+    pub registro: RegistroAvistamientos,
+    pub tramo: TramoDeRio,
+}
+
+impl BioVigia {
+    pub fn new(catalogo: CatalogoEspecies, red: RedDepredacion, registro: RegistroAvistamientos, tramo: TramoDeRio) -> Self {
+        Self { catalogo, red, registro, tramo }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum EstadoPresencia {
     PresenciaDetectada { avistamientos: usize },
