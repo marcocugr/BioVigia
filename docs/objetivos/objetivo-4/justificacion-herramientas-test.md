@@ -11,9 +11,9 @@ Los criterios que fijo a la hora de decidir son:
 - Claridad de los errores y facilidad para identificar qué test ha fallado.
 - Documentación oficial y actualizada.
 
-Tanto para la biblioteca de aserciones como para el test runner analizaré unica y exclusivamente todos los candidatos que considere oportunos para cada uno. Considero que es una muestra totalmente razonable y suficiente para una solida conclusion y eleccion por mi parte.
+La evaluación se basa en la documentación oficial de cada herramienta y en las pruebas que he realizado para conocer su funcionamiento e integración.
 
-Todas las decisiones han sido basadas bajo mi criterio, y, basandome en las fuentes oficiales de la documentacion de rust.
+No voy a realizar comparativas de rendimiento, ya que el proyecto se encuentra en una fase demasiado temprana y cuenta actualmente con muy pocos tests. En estas circunstancias, las diferencias de rendimiento no serían especialmente representativas ni aportarían información relevante para la elección.
 
 ## Biblioteca de aserciones
 Voy a clasificar en dos grupos:
