@@ -64,7 +64,7 @@ Los que evaluare son:
   - Personalmente discrepo un poco su mera existencia, pero llego a comprenderla.
 
 ### Eleccion
-**Me quedo con assertor**, es una nueva que no he usado hasta ahora en ningun proyecto mío personal, la veo bastante interesante, es la que más se ajusta a mi proyecto y me da esa libertad mínima pero no excesiva (como googletest) para poder construir los test como yo personalmente considero más claros y one liners, lo cual facilita la revisión de este trabajo por parte del corrector. Además me dice mucho más claro que falla, esto me es irrelevante, pero es un plus que me llevo de la mano junto con la expresividad. Además, esta decisión es una que personalmente quiero experimentar.
+**Me quedo con assertor**, principalmente por su expresividad y por la forma en la que permite construir las aserciones. Su sintaxis me resulta clara y permite expresar directamente qué comportamiento espero de cada test mediante una única línea. Además, proporciona información detallada cuando una aserción falla. Considero que es la alternativa que mejor encaja con mis necesidades actuales.
 
 ## Test runner
 Para evaluar los test runners tendré en cuenta los mismos criterios anteriores, prestando especial atención a la sencillez de integración, la compatibilidad con mis entornos de desarrollo y la información que proporcionan cuando falla un test.
