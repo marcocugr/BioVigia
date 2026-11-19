@@ -1,6 +1,7 @@
 use std::collections::BTreeSet;
 use std::fs;
 use biovigia::aplicacion::extractor_inaturalist::extraer_avistamiento_inaturalist;
+use biovigia::aplicacion::biovigia::BioVigia;
 use biovigia::dominio::avistamiento::RegistroAvistamientos;
 use biovigia::dominio::coordenadas::{Coordenadas, Latitud, Longitud};
 use biovigia::dominio::depredacion::{FaseVital, RedDepredacion, Depredacion};
@@ -29,6 +30,18 @@ pub fn get_especie_from_csv(index: usize) -> Result<(String, String, bool, Vec<S
     Ok((nombre_cientifico, nombre_comun, invasora, nombres_anteriores))
 }
 
+pub fn get_catalogo_completo_from_csv() -> Result<CatalogoEspecies, ErrorDominio> {
+    let mut catalogo = CatalogoEspecies::new();
+    let mut index = 0;
+    
+    while let Ok((nc, ncom, inv, na)) = get_especie_from_csv(index) {
+        catalogo.registrar(nc, ncom, inv, na)?;
+        index += 1;
+    }
+    
+    Ok(catalogo)
+}
+
 pub fn get_depredacion_from_csv(index: usize) -> Result<(String, String, BTreeSet<FaseVital>), ErrorDominio> {
     let contenido = fs::read_to_string("tests/fixtures/red.csv").map_err(|_| ErrorDominio::AvistamientoIncompleto)?;
     
@@ -51,6 +64,18 @@ pub fn get_depredacion_from_csv(index: usize) -> Result<(String, String, BTreeSe
     }).collect();
     
     Ok((depredador, presa, fases))
+}
+
+pub fn get_red_completa_from_csv(catalogo: &CatalogoEspecies) -> Result<RedDepredacion, ErrorDominio> {
+    let mut red = RedDepredacion::new();
+    let mut index = 0;
+    
+    while let Ok((dep, pre, fas)) = get_depredacion_from_csv(index) {
+        red.registrar(Depredacion::new(catalogo, &dep, &pre, fas, None)?)?;
+        index += 1;
+    }
+    
+    Ok(red)
 }
 
 pub fn get_tramo_from_csv(index: usize) -> Result<TramoDeRio, ErrorDominio> {
@@ -85,19 +110,10 @@ pub fn get_tramo_from_csv(index: usize) -> Result<TramoDeRio, ErrorDominio> {
     TramoDeRio::new(codigo, geometria)
 }
 
-pub fn setup(catalogo: &mut CatalogoEspecies, red: &mut RedDepredacion, registro: &mut RegistroAvistamientos, tramo: &mut TramoDeRio) -> Result<(), ErrorDominio> {
-    catalogo.registrar("Neogale vison".to_string(), "Visón americano".to_string(), true, vec![])?;
-    catalogo.registrar("Procambarus clarkii".to_string(), "Cangrejo rojo americano".to_string(), true, vec![])?;
-    catalogo.registrar("Salmo trutta".to_string(), "Trucha común".to_string(), false, vec![])?;
-    red.registrar(Depredacion::new(catalogo, "Neogale vison", "Salmo trutta", BTreeSet::from([FaseVital::Adulto, FaseVital::Juvenil]), None)?)?;
-    red.registrar(Depredacion::new(catalogo, "Neogale vison", "Procambarus clarkii", BTreeSet::from([FaseVital::Adulto]), None)?)?;
-    red.registrar(Depredacion::new(catalogo, "Procambarus clarkii", "Salmo trutta", BTreeSet::from([FaseVital::HuevoEmbrion]), None)?)?;
-    registro.registrar(extraer_avistamiento_inaturalist("tests/fixtures/inaturalist/vison.html")?)?;
-    *tramo = TramoDeRio::new("TR-001".to_string(), GeometriaTramo {
-        noroeste: Coordenadas::new(Latitud::new(40.05)?, Longitud::new(-4.65)?),
-        noreste: Coordenadas::new(Latitud::new(40.05)?, Longitud::new(-4.64)?),
-        suroeste: Coordenadas::new(Latitud::new(40.03)?, Longitud::new(-4.65)?),
-        sureste: Coordenadas::new(Latitud::new(40.03)?, Longitud::new(-4.64)?),
-    })?;
+pub fn setup(biovigia: &mut BioVigia) -> Result<(), ErrorDominio> {
+    biovigia.catalogo = get_catalogo_completo_from_csv()?;
+    biovigia.red = get_red_completa_from_csv(&biovigia.catalogo)?;
+    biovigia.registro.registrar(extraer_avistamiento_inaturalist("tests/fixtures/inaturalist/vison.html")?)?;
+    biovigia.tramo = get_tramo_from_csv(0)?;
     Ok(())
 }
