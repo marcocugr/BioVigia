@@ -44,7 +44,6 @@ Los que evaluare son:
 Los que evaluare son:
 - [pretty_assertions](https://docs.rs/pretty_assertions/latest/pretty_assertions/): Te dicen que si usas mucho assert_eq! llegaras a la conclusión de que te salta la aserción pero de que tienes que ver tu mismo las diferencias una a una.
   - Se usa de forma sencilla simplemente poniendo arriba del código `use pretty_assertions::{assert_eq, assert_ne};`, de tal forma que sobreescriben ambos assert.
-  - Es una dependencia externa pero me da igual, es solo poner en `Cargo.toml` una línea que diga `pretty_assertions = "1.4.1"` con esto encima `[dev-dependencies]`. No es mi problema porque esto se lo delego al gestor de dependencias que ya escogí y decidí con criterio en el objetivo pasado, Cargo.
   - La ventaja que te ofrece es que te las recalca de colores igual que si usas una IA para que toque tu codigo, que ves los cambios en rojo y en verde, es exactamente lo mismo.
   - Podría estar interesante en mi proyecto pero no considero que sea el caso, creo que está mas ligado a objetos que tienen JSONs enormes donde si que se pueda apreciar y valorar más claramente esta comparación.
   - Si me liara a poner campos y campos en el dominio y escalaran en cantidad de atributos quizás si se podría considerarlo, pero de momento no. 
