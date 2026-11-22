@@ -81,4 +81,27 @@ impl CatalogoEspecies {
             Err(ErrorDominio::EspecieNoInvasora)
         }
     }
+
+    pub fn especies_por_nombre_comun(&self, nombre_comun: &str) -> Vec<String> {
+        self.especies
+            .iter()
+            .filter(|(_, especie)| especie.nombre_comun == nombre_comun)
+            .map(|(nombre_cientifico, _)| nombre_cientifico.clone())
+            .collect()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assertor::VecAssertion;
+
+    #[test]
+    fn buscar_especies_por_nombre_comun_devuelve_todas_las_especies() {
+        let mut catalogo = CatalogoEspecies::new();
+        catalogo.registrar("Procambarus clarkii".to_string(), "Cangrejo".to_string(), true, vec![]).unwrap();
+        catalogo.registrar("Austropotamobius pallipes".to_string(), "Cangrejo".to_string(), false, vec![]).unwrap();
+        let resultado = catalogo.especies_por_nombre_comun("Cangrejo");
+        assertor::assert_that!(resultado).has_length(2);
+    }
 }

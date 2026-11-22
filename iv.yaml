@@ -3,3 +3,4 @@ entidad: src/dominio/especie.rs
 automatizar:
   fichero: justfile
   orden: just
+test: tests/hu001.rs

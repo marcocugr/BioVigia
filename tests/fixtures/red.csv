@@ -1,0 +1,5 @@
+depredador,presa,fases_afectadas,fuente
+Neogale vison,Salmo trutta,Adulto;Juvenil,
+Neogale vison,Procambarus clarkii,Adulto,
+Procambarus clarkii,Salmo trutta,HuevoEmbrion,
+Neogale vison,Oncorhynchus mykiss,Adulto,

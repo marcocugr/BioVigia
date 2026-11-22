@@ -2,7 +2,7 @@ install:
     cargo fetch
 
 test:
-    cargo test
+    cargo nextest run
 
 check:
     cargo check
