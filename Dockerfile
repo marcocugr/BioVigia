@@ -2,13 +2,7 @@ FROM rust:slim-trixie
 
 COPY rust-toolchain.toml /tmp/rust-toolchain.toml
 
-RUN set -eux; \
-    channel="$(sed -n 's/^channel = "\(.*\)"/\1/p' /tmp/rust-toolchain.toml)"; \
-    test -n "$channel"; \
-    rustup toolchain install "$channel" --profile minimal; \
-    cargo "+$channel" install --locked just; \
-    cargo "+$channel" install --locked cargo-nextest; \
-    rm /tmp/rust-toolchain.toml
+RUN cargo install --locked just cargo-nextest
 
 ENV HOME=/tmp \
     CARGO_HOME=/tmp/cargo \
