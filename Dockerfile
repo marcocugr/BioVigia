@@ -1,5 +1,5 @@
 # Uso la imagen acordada en docs/objetivos/objetivo-5/justificacion-imagen-base.md
-FROM rust:1.99-slim-trixie
+FROM rust:slim-trixie
 
 # Leo la versión de rust definida en el proyecto
 COPY rust-toolchain.toml /tmp/rust-toolchain.toml
