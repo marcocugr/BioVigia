@@ -17,4 +17,4 @@ WORKDIR /app/test
 
 USER 1001
 
-CMD ["sh", "-c", "just install && just test"]
+CMD ["just", "test"]
