@@ -9,9 +9,11 @@ RUN useradd -m -u 1000 -d /app biovigia \
     && mkdir -p /app/cargo /app/target /app/test /app/deps \
     && cargo install --locked just cargo-nextest
 
-COPY Cargo.toml Cargo.lock* /app/deps/
+COPY Cargo.toml Cargo.lock /app/deps/
+COPY src /app/deps/src
+COPY tests /app/deps/tests
 
-RUN cargo fetch --manifest-path /app/deps/Cargo.toml \
+RUN cargo fetch --locked --manifest-path /app/deps/Cargo.toml \
     && rm -rf /app/deps \
     && chown -R biovigia:biovigia /app \
     && chmod -R 777 /app/cargo /app/target
