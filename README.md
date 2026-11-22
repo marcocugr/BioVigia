@@ -136,10 +136,15 @@ docker pull marcocugr/biovigia
 
 Para correr los tests dentro del contenedor bajo dicha imagen:
 ``` bash
-docker run -u 1001 -t -v `pwd`:/app/test marcocugr/biovigia
+docker run --rm -t -v $(pwd):/app/test marcocugr/biovigia
 ```
 
-Si estas dentro del contenedor corre los test con:
+Si abres una shell dentro del contenedor con:
+```bash
+docker run --rm -it -v $(pwd):/app/test marcocugr/biovigia bash
+```
+
+entonces puedes correr los test con:
 ```bash
 just test
 ```
