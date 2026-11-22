@@ -1,12 +1,17 @@
 FROM rust:slim-trixie
 
-COPY rust-toolchain.toml /tmp/rust-toolchain.toml
+ENV HOME=/app \
+    CARGO_HOME=/app/cargo \
+    CARGO_TARGET_DIR=/app/target \
+    PATH="/app/cargo/bin:${PATH}"
 
-RUN cargo install --locked just cargo-nextest
+RUN mkdir -p /app/cargo /app/target /app/test /app/deps \
+    && cargo install --locked just cargo-nextest
 
-ENV HOME=/tmp \
-    CARGO_HOME=/tmp/cargo \
-    CARGO_TARGET_DIR=/tmp/target
+COPY Cargo.toml Cargo.lock* /app/deps/
+
+RUN cargo fetch --manifest-path /app/deps/Cargo.toml \
+    && rm -rf /app/deps
 
 WORKDIR /app/test
 
