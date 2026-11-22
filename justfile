@@ -1,7 +1,7 @@
 install:
-    cargo fetch
+    cargo fetch --locked
 
-test:
+test: install
     cargo nextest run
 
 check:
