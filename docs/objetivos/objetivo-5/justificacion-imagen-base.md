@@ -1,63 +1,124 @@
 # Elección de la imagen base
 
-## Criterios 
-- Me tiene que poder dejar usar rust 1.99 o la ultima version estable
-- Tener cargo si o si incluido
-- Tiene que tener o bien dejarme instalar just y nextest
-- Tiene que tener repo publico donde pueda ver si la imagen es de verdad segura y no esta comprometida
-- Me tiene que dejar poder bajar las dependencias que necesito, desde crates.io
-- Tener SOLO lo justo, lo minimo y lo necesario en cuanto a rust y herramientas del SO.
+## Criterios
+Los criterios 1, 2 y 3 son eliminatorios (se cumplen o no) y el 4 ordena a las que pasen. Todos se comprueban con un comando o un enlace, y las medidas son del 24 de noviembre de 2026.
+
+1. **Trazabilidad:** la imagen tiene repo publico con su Dockerfile, para poder ver que lleva dentro y que no esta comprometida.
+2. **Version:** el rustc de la imagen es la ultima version estable que publica rust.
+3. **Mantenimiento:** el ultimo push al repositorio de docker hub es de hace menos de 6 semanas, [que es lo que tarda rust en sacar version nueva.](https://rust-lang.github.io/rustup/concepts/channels.html) Si es mas antiguo, la imagen se puede quedar atras de la estable.
+4. **Herramientas ajenas:** cuantas de estas seis trae la imagen sin hacer falta para compilar ni testear: git, ssh, curl, wget, jq y g++. Cuantas menos, mejor. El compilador de C (gcc) no cuenta porque rustc lo necesita para enlazar.
 
 ### Que necesito
-- nextest
-- just
-- cargo, con version 1.99 o la ultima version estable del compilador
-- dependencias de cargo.toml (por el momento solo assertor)
+Esto lo cumplen todas, asi que no sirve para distinguirlas y por eso no esta en los criterios:
+- cargo y rust incluidos
+- poder instalar just y nextest
+- poder bajar las dependencias del cargo.toml (por el momento solo assertor) desde crates.io
 
-### Como evaluaré cada candidata
-Me haré 4 preguntas para evaluar a cada una:
-- ¿Quién mantiene la imagen?
-- ¿Qué sistema operativo utiliza?
-- ¿Qué paquetes adicionales contiene?
-- ¿Qué herramientas de compilación incluye?
+### Como lo compruebo
+Ultimo push (criterio 3):
+```bash
+curl -s https://hub.docker.com/v2/repositories/library/rust/ | python3 -m json.tool | grep last_updated
+```
+Version de rust (criterio 2), comparando la de la imagen con la ultima estable oficial:
+```bash
+docker run --rm --entrypoint sh rust:slim-trixie -c 'rustc --version'
+curl -s https://static.rust-lang.org/dist/channel-rust-stable.toml | grep -m1 -A1 '^\[pkg.rust\]'
+```
+Herramientas ajenas (criterio 4):
+```bash
+docker run --rm --entrypoint sh rust:slim-trixie -c 'for t in git ssh curl wget jq g++; do command -v $t >/dev/null && echo "$t: si" || echo "$t: no"; done'
+```
+Lo mismo para cada imagen cambiando el nombre. Para cargo-chef y ekidd use el tag latest y para cimg el tag 1.100.0, porque no tiene latest.
 
 ### Evaluacion
-Me da igual que sea una tabla, no esta generada por un engranaje de ejecucion:
 
-| Imagen base | SO | Repo trazable? | De lo que tengo, que tiene | De lo que tengo, que no tiene | Como podria bajar lo que no tiene | Quien la mantiene | Tiene muchos paquetes adicionales completamente innecesarios? | Compila la 1.99 o la ultima version estable? |
-|--------------|--------------|--------------|--------------|--------------|--------------|--------------|--------------|--------------|
-| [rust](https://hub.docker.com/_/rust) | Debian (Bookworm o Trixie, ambos pueden ser slim o no) o Alpine | [Si](https://github.com/rust-lang/docker-rust) | rust y cargo | just, nextest y las dependencias del proyecto | just con una sola linea, nextest puede instalarse con su instalador oficial (otra linea) y las dependencias (assertor) ejecutando cargo fetch | Rust Project developers | **Depende de la variante:**  La normal contiene “un gran número de paquetes Debian extremadamente comunes”, por lo que sí. La slim contiene solo los paquetes mínimos para ejecutar Rust. Alpine es aún más pequeña, pero usa musl libc y suele omitir herramientas como git o bash. | Si |
-| [lukemathwalker/cargo-chef](https://hub.docker.com/r/lukemathwalker/cargo-chef) | Hereda la variante de rust oficial: Debian Bookworm/Trixie o Alpine | [Si](https://github.com/LukeMathWalker/cargo-chef) | rustc, cargo y cargo-chef preinstalado | just, cargo-nextest y las dependencias del proyecto | Igual que la celda de arriba | LukeMathWalker y la comunidad, al fin y al cabo es proyecto de terceros, pero activamente mantenido | **Si, pero poco:** Lo que te meten es [cargo-chef](https://docs.fly.io/rust/the-basics/cargo-chef), que sirve para cachear dependencias rust en builds de docker multietapa. | Si |
-| [cimg/rust](https://hub.docker.com/r/cimg/rust) | Ubuntu | [Si](https://github.com/CircleCI-Public/cimg-rust) | rust y cargo, pero en algunas variantes de CI incluye utilidades extra como nextest | just, nextest (salvo que el tag concreto lo incluya) y las dependencias del proyecto | Igual que la celda de arriba | CircleCI | **Si, y bastantes** porque es una "convenience image" de CI que te incluye: git, ssh, curl, jq, y otros componentes de Ubuntu que soncompletamente irrelevantes para compilar un proyecto de rust | Si |
-| [ekidd/rust-musl-builder](https://hub.docker.com/r/ekidd/rust-musl-builder/) | Ubuntu | [Sí](https://github.com/emk/rust-musl-builder) | Rust, Cargo, musl libc, compiladores de C y de C++ y librerías C estáticas orientadas a producir binarios estáticos | just, cargo-nextest y las dependencias del proyecto | Igual que en la celda de arriba | Terceros y la comunidad, peor vamos que la imagen publicada no se actualiza desde hace más de cuatro años | Si: está orientada a compilación cruzada y binarios estáticos, nada mas tienes que ver que te trae compiladores de C y de C++, librerías estáticas, OpenSSL, git, scripts propios y otras herramientas innecesarias para un build normal | **No garantizado:** la imagen publicada está desactualizada y sus versiones de rust/toolchain no son fiables para compilar Rust 1.99, de hecho, no se recomienda. Vamos que está abandonado. |
+#### [rust](https://hub.docker.com/_/rust)
+- **SO:** Debian (Bookworm o Trixie, ambos pueden ser slim o no) o Alpine
+- **Repo trazable?** [Si](https://github.com/rust-lang/docker-rust)
+- **De lo que tengo, que tiene:** rust y cargo
+- **De lo que tengo, que no tiene:** just, nextest y las dependencias del proyecto
+- **Como podria bajar lo que no tiene:** just con una sola linea, nextest puede instalarse con su instalador oficial (otra linea) y las dependencias (assertor) ejecutando cargo fetch
+- **Quien la mantiene:** Rust Project developers
+- **Ultimo push:** 2026-11-24. **Pasa el criterio 3**
+- **Version de rust (tag slim-trixie):** rustc 1.100.0, que es la ultima estable (publicada el 2026-11-09). **Pasa el criterio 2**
+- **Herramientas ajenas (tag slim-trixie):** **0 de 6**, no trae ninguna de git, ssh, curl, wget, jq ni g++
 
+#### [lukemathwalker/cargo-chef](https://hub.docker.com/r/lukemathwalker/cargo-chef)
+- **SO:** Hereda la variante de rust oficial: Debian Bookworm/Trixie o Alpine
+- **Repo trazable?** [Si](https://github.com/LukeMathWalker/cargo-chef)
+- **De lo que tengo, que tiene:** rustc, cargo y cargo-chef preinstalado
+- **De lo que tengo, que no tiene:** just, cargo-nextest y las dependencias del proyecto
+- **Como podria bajar lo que no tiene:** Igual que en la imagen oficial de rust
+- **Quien la mantiene:** LukeMathWalker y la comunidad, al fin y al cabo es proyecto de terceros, pero activamente mantenido
+- **Ultimo push:** 2026-11-13. **Pasa el criterio 3**
+- **Version de rust (tag latest):** rustc 1.100.0, la ultima estable. **Pasa el criterio 2**
+- **Herramientas ajenas (tag latest):** **5 de 6**, trae git, ssh, curl, wget y g++ y solo le falta jq. Ademas del cargo-chef, que sirve para cachear dependencias rust en builds de docker multietapa y que yo no necesito
+
+#### [cimg/rust](https://hub.docker.com/r/cimg/rust)
+- **SO:** Ubuntu
+- **Repo trazable?** [Si](https://github.com/CircleCI-Public/cimg-rust)
+- **De lo que tengo, que tiene:** rust y cargo. Las variantes con sufijo -node y -browsers añaden ademas node y navegadores
+- **De lo que tengo, que no tiene:** just, nextest y las dependencias del proyecto
+- **Como podria bajar lo que no tiene:** Igual que en la imagen oficial de rust
+- **Quien la mantiene:** CircleCI
+- **Ultimo push:** 2026-11-13. **Pasa el criterio 3**
+- **Version de rust (tag 1.100.0):** rustc 1.100.0, la ultima estable. **Pasa el criterio 2**
+- **Herramientas ajenas (tag 1.100.0):** **6 de 6**, trae git, ssh, curl, wget, jq y g++. Es una "convenience image" de CI, por eso lleva todo eso que es completamente irrelevante para compilar un proyecto de rust
+
+#### [ekidd/rust-musl-builder](https://hub.docker.com/r/ekidd/rust-musl-builder/)
+- **SO:** Ubuntu
+- **Repo trazable?** [Sí](https://github.com/emk/rust-musl-builder)
+- **De lo que tengo, que tiene:** Rust, Cargo, musl libc, compiladores de C y de C++ y librerías C estáticas orientadas a producir binarios estáticos
+- **De lo que tengo, que no tiene:** just, cargo-nextest y las dependencias del proyecto
+- **Como podria bajar lo que no tiene:** Igual que en la imagen oficial de rust
+- **Quien la mantiene:** Terceros y la comunidad, pero vamos que la imagen publicada no se actualiza desde hace mas de cuatro años
+- **Ultimo push:** 2022-03-24. **No pasa el criterio 3**
+- **Version de rust (tag latest):** rustc 1.59.0 cuando la ultima estable es la 1.100.0. **No pasa el criterio 2**
+- **Herramientas ajenas (tag latest):** **4 de 6**, trae git, ssh, curl y g++, y no trae wget ni jq. Esta orientada a compilacion cruzada y binarios estaticos, por eso lleva librerias estaticas, OpenSSL y scripts propios que no hacen falta para un build normal
+- **Resultado:** eliminada por los criterios 2 y 3, abandonada
+
+### Resultado de la primera ronda
+- **rust (oficial):** pasa los tres y trae 0 de 6 herramientas ajenas
+- **lukemathwalker/cargo-chef:** pasa los tres y trae 5 de 6
+- **cimg/rust:** pasa los tres y trae 6 de 6
+- **ekidd/rust-musl-builder:** eliminada
+
+Con el criterio 4 la imagen oficial queda la primera con diferencia.
+
+### Variantes de la imagen oficial
+La oficial tiene varias variantes, asi que hace falta otra ronda para elegir. Aparte del criterio 4 uso dos criterios mas:
+
+5. **Plataforma:** el target de la variante es tier 1 en la [tabla de plataformas de rust](https://doc.rust-lang.org/nightly/rustc/platform-support.html). Esto es lo que dice el propio proyecto rust sobre lo que garantiza que funcione.
+6. **Debian estable:** si la variante es Debian, que sea la release estable actual segun [debian.org](https://www.debian.org/releases/).
+
+Resultado:
+- **Alpine:** usa musl, y x86_64-unknown-linux-musl no es tier 1 mientras que x86_64-unknown-linux-gnu (glibc) si lo es. **Descartada por el criterio 5**, no por tamaño.
+- **Debian normal (sin slim):** contiene "un gran número de paquetes Debian extremadamente comunes" segun su propia documentacion, asi que pierde en el criterio 4 frente a la slim, que contiene solo los paquetes mínimos para ejecutar Rust.
+- **Debian Bookworm:** es la estable anterior, no la actual. **Descartada por el criterio 6**.
+- **Debian Slim Trixie:** pasa todo. **Elegida.**
 
 ## Decision
 Si resumimos cada una basicamente:
 - **rust**: Por partes:
-  - Debian: es la opcion más adecuada si quieres compilar sin complicaciones, parte de lo mínimo, mantienes compatibilidad con glibc y solo añades just, nextest y las dependencias del proyecto. La variante normal (la que no es slim) solo tendría sentido si necesitaras muchas herramientas del sistema y no quisieras instalarlas tu.
-  - Alpine: es la más ligera, usa musl en lugar de glibc, y eso puede complicar la compilación o el comportamiento de algunas dependencias. Además que según he visto la ganancia de tamaño no justifica ese riesgo si tu prioridad es compilar rust 1.99 o la ultima version estable de forma sencilla y reproducible.
-- **lukemathwalker/cargo-chef**: Interesante, pero lo unico que me trae es el cargo-chef que sirve para cachear dependencias y evitar recompilarlas constantemente, en mi caso, el proyecto es pequeño y como ya he mencionado otras veces, no voy a  desarrollarle mas alla de estas asignaturas, por lo que no puedo nutrirme de sus beneficios reales.
-- **cimg/rust**: No voy a usar git en un docker, menos aun ssh y tiene componentes de ubuntu que me dan completamente igual, sobran y no tienen que ver nada con el proyecto. Vamos, que tiene mucha basura.
-- **ekidd/rust-musl-builder**: Abandonada y obsoleta, no puedo fijar 1.99 o la ultima version estable, no la mantiene oficialmente rust, y tiene una cantidad de basura que me es completamente irrelevante como cosas de C y C++.
+  - Debian slim: es la opcion mas adecuada si quieres compilar sin complicaciones, parte de lo minimo (0 de 6 herramientas ajenas), mantienes compatibilidad con glibc y solo añades just, nextest y las dependencias del proyecto. La variante normal (la que no es slim) solo tendria sentido si necesitara muchas herramientas del sistema y no quisiera instalarlas yo.
+  - Alpine: es la mas ligera y usa busybox, asi que ni siquiera trae bash. Pero usa musl en lugar de glibc, y ese target no es tier 1 en rust, por eso la descarto por el criterio 5 y no porque me de miedo el tamaño. Mi prioridad no es optimizar hasta el ultimo byte, sino quitar muchisimas cosas innecesarias y poder trabajar sin problemas.
+- **lukemathwalker/cargo-chef**: Interesante, pero lo que me trae es el cargo-chef, que sirve para cachear dependencias y evitar recompilarlas constantemente, y ademas git, ssh, curl, wget y g++ (5 de 6) que no necesito. En mi caso el proyecto es pequeño y no voy a desarrollarlo mas alla de estas asignaturas, asi que no aprovecho sus beneficios. Aunque hubiera variante slim, lo unico que añadiria seria cargo-chef, que sigo sin usar.
+- **cimg/rust**: Trae las 6 herramientas ajenas (git, ssh, curl, wget, jq y g++), que no tienen nada que ver con compilar y testear mi proyecto. Vamos, que tiene mucha basura.
+- **ekidd/rust-musl-builder**: Abandonada y obsoleta. Su ultimo push es de 2022 y trae rustc 1.59.0 cuando la ultima estable es la 1.100.0, asi que no cumple los criterios 2 y 3.
 
-Teniendo todas las cartas sobre la mesa, la idea que se me ocurre es de la imagen oficial, bajarme el debian slim, meterle 3 lineas de instalacion correspondientes a las dependcias, a just y a nextest y tendria lo justo, lo minimo y lo necesario en relativo a rust para mi proyecto.
+Sabiendo que ninguna imagen publica va a venir hecha a medida exactamente para mi Cargo.toml con solo assertor, just y nextest sin meter cosas de mas, siempre voy a tener que meterle cosas a las imagenes. Partiendo de ahi, prefiero la que menos cosas innecesarias trae y que ademas es la que mantiene el propio proyecto rust.
 
-Ahora bien, date cuenta que he dicho de rust y no del sistema, porque del sistema no es minimo, pero en este caso, como tambien dije antes, prefiero NO jugarmela y poder dormir tranquilo sabiendo que puedo compilar sencillamente y se va a reproducir bien en el docker.
+Finalmente y tras este analisis, me quedo con la imagen oficial en su variante **Debian Slim Trixie**.
 
-Pero tambien surje una pregunta, hay cosas del SO que puede que sean innecesarias en esta slim de Debian y que por tanto no me hagan falta, es aqui donde quiero valorar mas seriamente un Alpine, siempre y cuando me pueda recortar aun mas estas cosas innecesarias SIN dar problemas. De hecho usa busybox, no estaria usando ni bash, pero, segun lo que he visto, busybox es el estandar para contenedores ligeros.
-
-Sabiendo que ninguna imagen pública va a venir (casi nunca, por no decir nunca) hecha a medida exactamente para mi Cargo.toml con solo assertor, just y nextest sin meter "basura" por otro lado, siempre voy a  tener que meterle cosas a las imagenes, partiendo de ahi, prefiero tener pocas cosas que sean innecesarias como es el caso de debian a tener unicamente lo justo y que eso conlleve posibles problemas que no tendría que tener, mi prioridad aquí como dije en los criterios no es optimizar hasta el mas mínimo byte, sino quitar muchisimas cosas innecesarias pero poder trabajar cómodo y sin problemas.
-
-Finalmente y tras este analisis, me quedo con debian slim
-
-Ahora bien, trixie o bookworm? Porque he mencionado dos, voy a analizarlas:
-- **[Trixie](https://www.debian.org/releases/trixie/)**: Es la versión estable actual, con lo cual es ideal para proyectos nuevos por tener librerías más modernas. La ultima version ademas fue ayer 21 de noviembre.
-- **[Bookworm](https://www.debian.org/News/2026/20260712)**: Es la versión estable anterior, recomendada solo si necesitas mantener compatibilidad con software o dependencias. Su ultima version fue este 12 de julio de 2026
+Ahora bien, ¿Trixie o Bookworm? Las dos son slim, asi que lo decide el criterio 6:
+- **[Trixie](https://www.debian.org/releases/trixie/)**: Es la version estable actual, con lo cual es ideal para proyectos nuevos por tener librerias mas modernas. Su ultima version salio el 21 de noviembre de 2026.
+- **[Bookworm](https://www.debian.org/News/2026/20260712)**: Es la version estable anterior, recomendada solo si necesitas mantener compatibilidad con software o dependencias. Su ultima version salio el 12 de julio de 2026.
 
 Con lo cual la respuesta es evidente, me quedo con Debian Slim Trixie.
 
 ### Cosas a tener en cuenta
-Esta candidata con la que me quedo, como bien dije, no incluye curl ni wget por defecto (precisamente porque es slim), por lo que tengo dos opciones para bajar just y nextest:
-- O me bajo curl y ca-certificates en la capa RUN del dockerfile
-- O cargo install que es mas lento
+Esta imagen no incluye curl ni wget por defecto (precisamente porque es slim, lo medi arriba). Para bajar just y nextest tengo dos opciones:
+- Instalar curl y ca-certificates en la capa RUN del Dockerfile, que añade dos herramientas que no hacen falta.
+- cargo install, que es mas lento.
+
+Uso cargo install. Tarda mas, pero la imagen se construye una vez y se usa muchas, asi que el tiempo de construccion no cuenta, y asi la imagen se queda sin curl.
