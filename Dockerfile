@@ -5,7 +5,7 @@ ENV HOME=/app \
     CARGO_TARGET_DIR=/app/target \
     PATH="/app/cargo/bin:${PATH}"
 
-RUN useradd -m -d /app biovigia \
+RUN useradd -d /app biovigia \
     && mkdir -p /app/cargo /app/target /app/test /app/deps \
     && chown -R biovigia:biovigia /app
 
