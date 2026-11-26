@@ -61,7 +61,7 @@ Lo mismo para cada imagen cambiando el nombre. Para cargo-chef y ekidd use el ta
 - **Quien la mantiene:** LukeMathWalker y la comunidad, al fin y al cabo es proyecto de terceros, pero activamente mantenido
 - **Ultimo push:** 2026-11-13. **Pasa el criterio 3**
 - **Version de rust (tag latest):** rustc 1.100.0, la ultima estable. **Pasa el criterio 2**
-- **Tamaño y tiempo de descarga (tag latest):** 606 MB y 15,0 s. Lleva ademas el cargo-chef, que sirve para cachear dependencias rust en builds de docker multietapa y que yo no necesito
+- **Tamaño y tiempo de descarga (tag latest):** 606 MB y 15,0 s. Lleva ademas el cargo-chef, que sirve para cachear dependencias rust en builds de docker multietapa
 
 #### [cimg/rust](https://hub.docker.com/r/cimg/rust)
 - **SO:** Ubuntu
