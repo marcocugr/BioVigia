@@ -1,6 +1,4 @@
-ARG BASE_IMAGE=rust:slim-trixie
-FROM ${BASE_IMAGE}
-USER root
+FROM rust:slim-trixie
 
 ENV HOME=/app \
     CARGO_HOME=/app/cargo \
