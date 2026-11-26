@@ -124,3 +124,27 @@ La entidad que se comprueba es `CatalogoEspecies`, en [`src/dominio/especie.rs`]
     just check
 
 Esta orden ejecuta `cargo check` (mira el [justfile](./justfile)), que comprueba únicamente que el código compila (sintaxis y tipos), incluida esta entidad. Todavía no ejecuta pruebas ni formato ni linter.
+
+## Contenedor de pruebas
+La justificacion de la eleccion de mi imagen base esta ahí:
+- [Justificación de la imagen base](docs/objetivos/objetivo-5/justificacion-imagen-base.md)
+
+Para bajarse mi imagen desde dockerhub, hay que hacerla pull primero:
+``` bash
+docker pull marcocugr/biovigia
+```
+
+Para correr los tests dentro del contenedor bajo dicha imagen:
+``` bash
+docker run --rm -t -v $(pwd):/app/test marcocugr/biovigia
+```
+
+Si abres una shell dentro del contenedor con:
+```bash
+docker run --rm -it -v $(pwd):/app/test marcocugr/biovigia bash
+```
+
+entonces puedes correr los test con:
+```bash
+just test
+```
